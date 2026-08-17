@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SEO Audit Tool</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; }
+      
+      .header {
+        background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+        color: white;
+        padding: 32px 24px;
+        margin-bottom: 24px;
+      }
+      .header-content { max-width: 900px; margin: 0 auto; }
+      .header h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+      .header-icon { width: 32px; height: 32px; }
+      .header-subtitle { font-size: 14px; opacity: 0.9; margin-bottom: 8px; }
+      .header-checks { font-size: 13px; opacity: 0.85; }
+      
+      .container { max-width: 900px; margin: 0 auto; padding: 0 24px 32px; }
+      
+      .info-box {
+        background: #fffbf0;
+        border-left: 4px solid #fb8c00;
+        padding: 16px;
+        margin-bottom: 24px;
+        border-radius: 4px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .info-box strong { color: #e65100; display: block; margin-bottom: 6px; }
+      .info-box code { background: white; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+      
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+      .tab-btn {
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: #666;
+        transition: all 0.2s;
+      }
+      .tab-btn:hover { color: #1976d2; }
+      .tab-btn.active {
+        color: #1976d2;
+        border-bottom-color: #1976d2;
+      }
+      
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+      
+      .form-group { margin-bottom: 20px; }
+      label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #333; }
+      
+      input[type="text"], textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+        background: white;
+      }
+      input[type="text"]:focus, textarea:focus {
+        outline: none;
+        border-color: #1976d2;
+        box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+      }
+      textarea { resize: vertical; min-height: 120px; }
+      
+      .actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      button.check-btn {
+        background: #1976d2;
+        color: white;
+        padding: 12px 32px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        min-width: 120px;
+      }
+      button.check-btn:hover { background: #1565c0; }
+      button.check-btn:disabled { background: #ccc; cursor: not-allowed; }
+      
+      .download-link {
+        padding: 12px 20px;
+        background: #4caf50;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: background 0.2s;
+        display: inline-block;
+      }
+      .download-link:hover { background: #45a049; }
+      
+      .loading { display: none; font-size: 14px; color: #1976d2; }
+      .loading.show { display: inline; }
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #1976d2;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-right: 6px;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      
+      .error { background: #ffebee; border-left: 4px solid #c62828; color: #c62828; padding: 12px; border-radius: 4px; font-size: 14px; margin-top: 12px; }
+      .success { background: #e8f5e9; border-left: 4px solid #2e7d32; color: #2e7d32; padding: 12px; border-radius: 4px; font-size: 14px; margin-top: 12px; }
+      
+      .results-table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+        font-size: 13px;
+        background: white;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .results-table th {
+        background: #f5f5f5;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #ddd;
+        color: #333;
+      }
+      .results-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #eee;
+      }
+      .results-table tr:hover { background: #fafafa; }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-weight: 500;
+        font-size: 12px;
+      }
+      .status-ok { background: #c8e6c9; color: #2e7d32; }
+      .status-warn { background: #fff3e0; color: #e65100; }
+      .status-err { background: #ffebee; color: #c62828; }
+      
+      .bool-true { color: #2e7d32; font-weight: 600; }
+      .bool-false { color: #999; }
+
+      /* Section colour coding — applied to headers and cells */
+      .hdr-lhs { background: #dbeafe !important; color: #1e40af; font-weight: 600; }
+      .hdr-rhs { background: #dcfce7 !important; color: #166534; font-weight: 600; }
+      .hdr-ftr { background: #fef9c3 !important; color: #854d0e; font-weight: 600; }
+      .hdr-cta { background: #f3e4ff !important; color: #6b21a8; font-weight: 600; }
+      .col-lhs { background: #dbeafe !important; }
+      .col-rhs { background: #dcfce7 !important; }
+      .col-ftr { background: #fef9c3 !important; }
+      .col-cta { background: #f3e4ff !important; }
+
+      /* Result-view tabs (Footer Audit / LHS Audit) */
+      .result-tabs {
+        display: flex;
+        gap: 4px;
+        margin-top: 20px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+      .result-tab-btn {
+        padding: 10px 24px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-bottom: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        color: #666;
+        border-radius: 6px 6px 0 0;
+        transition: all 0.15s;
+      }
+      .result-tab-btn:hover { color: #1976d2; background: #e3f2fd; }
+      .result-tab-btn.active {
+        color: #1976d2;
+        background: white;
+        border-color: #e0e0e0;
+        border-bottom: 2px solid white;
+        margin-bottom: -2px;
+      }
+      .result-tab-content { display: none; }
+      .result-tab-content.active { display: block; }
+
+      .lhs-sections-cell {
+        font-size: 11px;
+        color: #444;
+        max-width: 300px;
+        word-break: break-word;
+        line-height: 1.5;
+      }
+      .link-count-cell {
+        text-align: center;
+        font-weight: 700;
+        font-size: 15px;
+        color: #1976d2;
+      }
+
+      /* Audit selection checkboxes */
+      .audit-options {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 12px 16px;
+        background: #f0f4ff;
+        border: 1px solid #c5cae9;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        font-size: 14px;
+      }
+      .audit-options .opt-label {
+        font-weight: 600;
+        color: #3949ab;
+        white-space: nowrap;
+      }
+      .audit-options label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #333;
+        margin: 0;
+        user-select: none;
+      }
+      .audit-options input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        accent-color: #1976d2;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-content">
+        <h1>
+          <svg class="header-icon" viewBox="0 0 24 24" fill="white">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-1.3-1.54c-.2-.24-.57-.24-.77 0-.2.24-.2.62 0 .85l1.7 2.05c.1.13.26.2.43.2.17 0 .33-.07.43-.2l3.15-4.1c.2-.24.2-.62 0-.85-.2-.23-.57-.23-.77.05z"/>
+          </svg>
+          SEO Audit Tool
+        </h1>
+        <div class="header-subtitle">ManageEngine ADAudit Plus · Multilingual Pages</div>
+        <div class="header-checks">Checks for: <strong>Active Directory · File Server · Windows Server · Workstation · Compliance · Related Products</strong></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="info-box">
+        <strong>ℹ️ How detection works:</strong>
+        Product navigation is detected by scanning for 2 or more expected elements within any 3000-character window of the page, using multilingual aliases (English, French, German, Spanish, Portuguese, Italian, Dutch, Turkish). Pages missing this block are marked <span style="color: #e65100; font-weight: 600;">✕ Missing</span>.
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="single-url">
+          🔗 Single URL
+        </button>
+        <button class="tab-btn" data-tab="batch-urls">
+          📋 Batch URLs
+        </button>
+      </div>
+
+      <!-- Audit type selection — applies to both Single URL and Batch URLs -->
+      <div class="audit-options">
+        <span class="opt-label">Audit:</span>
+        <label>
+          <input type="checkbox" id="opt-footer" checked>
+          🔍 Footer Navigation
+        </label>
+        <label>
+          <input type="checkbox" id="opt-lhs" checked>
+          📋 LHS Navigation
+        </label>
+        <label>
+          <input type="checkbox" id="opt-rhs" checked>
+          📌 RHS Navigation
+        </label>
+        <label>
+          <input type="checkbox" id="opt-cta" checked>
+          🎯 RHS Floating CTA
+        </label>
+        <label>
+          <input type="checkbox" id="opt-compare">
+          🔄 Comparison (Local vs EN)
+        </label>
+      </div>
+
+      <!-- Single URL Tab -->
+      <div class="tab-content active" id="single-url">
+        <div class="form-group">
+          <label for="single-url-input">Enter URL</label>
+          <input type="text" id="single-url-input" placeholder="https://www.example.com/page">
+        </div>
+        <div class="actions">
+          <button class="check-btn" onclick="auditSingleURL()">Check</button>
+          <div class="loading" id="single-loading">
+            <span class="spinner"></span>
+            Running audit...
+          </div>
+        </div>
+        <div id="single-message"></div>
+        <div id="single-results"></div>
+      </div>
+
+      <!-- Batch URLs Tab -->
+      <div class="tab-content" id="batch-urls">
+        <div class="form-group">
+          <label for="batch-urls-input">Enter URLs (one per line)</label>
+          <textarea id="batch-urls-input" placeholder="https://www.example.com/page1&#10;https://www.example.com/page2"></textarea>
+        </div>
+        <div class="actions">
+          <button class="check-btn" onclick="auditBatchURLs()">Check</button>
+          <div class="loading" id="batch-loading">
+            <span class="spinner"></span>
+            Running audit...
+          </div>
+        </div>
+        <div id="batch-message"></div>
+        <div id="batch-results"></div>
+      </div>
+    </div>
+
+    <script>
+      // Tab switching
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const tabName = this.getAttribute('data-tab');
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.getElementById(tabName).classList.add('active');
+          this.classList.add('active');
+        });
+      });
+
+      function bool(v) {
+        return '<span class="' + (v ? 'bool-true' : 'bool-false') + '">' + (v ? 'Available' : 'Not available') + '</span>';
+      }
+
+      // Switch between Footer Audit and LHS Audit result tabs.
+      function switchResultTab(name, btn) {
+        const bar = btn.closest('.result-tabs');
+        const container = bar.parentElement;
+        container.querySelectorAll('.result-tab-content').forEach(el => el.classList.remove('active'));
+        container.querySelector('.result-tab-content[data-tab="' + name + '"]').classList.add('active');
+        bar.querySelectorAll('.result-tab-btn').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      function formatLhsResults(rows) {
+        if (!rows || rows.length === 0) return '<p>No results.</p>';
+        let html = '<table class="results-table" style="margin-top:0;"><thead>';
+        html += '<tr>';
+        html += '<th>URL</th><th>Language</th><th>Product</th>';
+        html += '<th class="hdr-lhs">LHS Status</th><th class="hdr-lhs">Detected</th>';
+        html += '<th class="hdr-lhs">Links</th><th class="hdr-lhs">Category Sections (span.ifTree)</th>';
+        html += '<th class="hdr-lhs">Related Prod</th>';
+        html += '</tr></thead><tbody>';
+        rows.forEach(row => {
+          const fetchFailed = row.note && row.note.startsWith('Fetch failed');
+          const sc = fetchFailed ? 'status-warn' : (row.lhs_detected ? 'status-ok' : 'status-err');
+          const lhsLabel = fetchFailed ? 'Invalid URL' : (row.lhs_detected ? 'LHS Detected' : 'LHS Missing');
+          const sections = row.lhs_sections || '';
+          html += '<tr>';
+          html += '<td style="max-width:260px;word-break:break-all;font-size:12px;">' + escapeHtml(row.url) + '</td>';
+          html += '<td style="font-size:12px;color:#555;">' + escapeHtml(row.language || 'English') + '</td>';
+          html += '<td style="font-size:11px;color:#666;">' + escapeHtml(row.product || '') + '</td>';
+          html += '<td class="col-lhs"><span class="status-badge ' + sc + '">' + lhsLabel + '</span></td>';
+          html += '<td class="col-lhs">' + bool(row.lhs_detected) + '</td>';
+          html += '<td class="col-lhs link-count-cell">' + (row.lhs_link_count || 0) + '</td>';
+          html += '<td class="col-lhs lhs-sections-cell">' + (sections ? escapeHtml(sections) : '<span style="color:#bbb">—</span>') + '</td>';
+          html += '<td class="col-lhs">' + bool(row.lhs_related_products) + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        html += '<div style="margin-top:16px;display:flex;gap:12px;">'
+              + '<a href="/download" class="download-link">⬇ Download CSV Report</a>'
+              + '<a href="/download-excel" class="download-link" style="background:#1565c0;">⬇ Download Excel</a>'
+              + '</div>';
+        return html;
+      }
+
+      function formatRhsResults(rows) {
+        if (!rows || rows.length === 0) return '<p>No results.</p>';
+        let html = '<table class="results-table" style="margin-top:0;"><thead>';
+        html += '<tr>';
+        html += '<th>URL</th>';
+        html += '<th>Language</th>';
+        html += '<th>Product</th>';
+        html += '<th class="hdr-rhs">RHS Status</th>';
+        html += '<th class="hdr-rhs">Detected</th>';
+        html += '<th class="hdr-rhs">Links</th>';
+        html += '<th class="hdr-rhs">Sections (p.rhsTreeHeader)</th>';
+        html += '</tr></thead><tbody>';
+        rows.forEach(row => {
+          const fetchFailed = row.note && row.note.startsWith('Fetch failed');
+          const sc = fetchFailed ? 'status-warn' : (row.rhs_detected ? 'status-ok' : 'status-err');
+          const rhsLabel = fetchFailed ? 'Invalid URL' : (row.rhs_detected ? 'RHS Detected' : 'RHS Missing');
+          const sections = row.rhs_sections || '';
+          html += '<tr>';
+          html += '<td style="max-width:260px;word-break:break-all;font-size:12px;">' + escapeHtml(row.url) + '</td>';
+          html += '<td style="font-size:12px;color:#555;">' + escapeHtml(row.language || 'English') + '</td>';
+          html += '<td style="font-size:11px;color:#666;">' + escapeHtml(row.product || '') + '</td>';
+          html += '<td class="col-rhs"><span class="status-badge ' + sc + '">' + rhsLabel + '</span></td>';
+          html += '<td class="col-rhs">' + bool(row.rhs_detected) + '</td>';
+          html += '<td class="col-rhs link-count-cell">' + (row.rhs_link_count || 0) + '</td>';
+          html += '<td class="col-rhs lhs-sections-cell">' + (sections ? escapeHtml(sections) : '<span style="color:#bbb">—</span>') + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        html += '<div style="margin-top:16px;display:flex;gap:12px;">'
+              + '<a href="/download" class="download-link">⬇ Download CSV Report</a>'
+              + '<a href="/download-excel" class="download-link" style="background:#1565c0;">⬇ Download Excel</a>'
+              + '</div>';
+        return html;
+      }
+
+      function formatCtaResults(rows) {
+        if (!rows || rows.length === 0) return '<p>No results.</p>';
+        let html = '<table class="results-table" style="margin-top:0;"><thead><tr>'
+          + '<th>URL</th><th>Language</th><th>Product</th>'
+          + '<th class="hdr-cta">CTA Status</th><th class="hdr-cta">Pattern</th><th class="hdr-cta">CTA Button(s)</th><th class="hdr-cta">Heading</th><th class="hdr-cta">Bullet Points</th><th class="hdr-cta">Form</th>'
+          + '</tr></thead><tbody>';
+        rows.forEach(row => {
+          const fetchFailed = row.note && row.note.startsWith('Fetch failed');
+          const detected = !fetchFailed && row.cta_detected;
+          const sc       = fetchFailed ? 'status-warn' : (detected ? 'status-ok' : 'status-err');
+          const label    = fetchFailed ? 'Invalid URL' : (detected ? 'CTA Present' : 'CTA Missing');
+          const pattern  = row.cta_pattern || '';
+          const patternBadge = pattern === 'form-panel'
+            ? '<span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;">Form Panel</span>'
+            : pattern === 'floating-buttons'
+            ? '<span style="background:#fef9c3;color:#854d0e;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;">Floating Buttons</span>'
+            : pattern === 'sliding-buttons'
+            ? '<span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;">Sliding Buttons</span>'
+            : '<span style="color:#bbb">—</span>';
+          const bullets = (row.cta_bullets || '').split(' | ').filter(Boolean);
+          const bulletHtml = bullets.length
+            ? '<ul style="margin:0;padding-left:14px;font-size:11px;">' + bullets.map(b => '<li>' + escapeHtml(b) + '</li>').join('') + '</ul>'
+            : '<span style="color:#bbb">—</span>';
+          html += '<tr>';
+          html += '<td style="max-width:260px;word-break:break-all;font-size:12px;">' + escapeHtml(row.url) + '</td>';
+          html += '<td style="font-size:12px;color:#555;">' + escapeHtml(row.language || 'English') + '</td>';
+          html += '<td style="font-size:11px;color:#666;">' + escapeHtml(row.product || '') + '</td>';
+          html += '<td class="col-cta"><span class="status-badge ' + sc + '">' + label + '</span></td>';
+          html += '<td class="col-cta" style="text-align:center;">' + patternBadge + '</td>';
+          html += '<td class="col-cta" style="font-size:12px;">' + (row.cta_text ? escapeHtml(row.cta_text) : '<span style="color:#bbb">—</span>') + '</td>';
+          html += '<td class="col-cta" style="font-size:12px;max-width:200px;">' + (row.cta_heading ? escapeHtml(row.cta_heading) : '<span style="color:#bbb">—</span>') + '</td>';
+          html += '<td class="col-cta">' + bulletHtml + '</td>';
+          html += '<td class="col-cta" style="text-align:center;">' + bool(row.cta_form_present) + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        html += '<div style="margin-top:16px;display:flex;gap:12px;">'
+              + '<a href="/download" class="download-link">⬇ Download CSV Report</a>'
+              + '<a href="/download-excel" class="download-link" style="background:#1565c0;">⬇ Download Excel</a>'
+              + '</div>';
+        return html;
+      }
+
+      // Stores last comparison data so filters can re-render without re-fetching
+      let _cmpRows = [];
+
+      function buildComparisonTable(rows, showLhs, showRhs, showFooter, showCta) {
+        if (!rows || rows.length === 0) return '<p>No comparison results.</p>';
+
+        // Build header
+        const groupCols = [];
+        if (showLhs)    groupCols.push('LHS');
+        if (showRhs)    groupCols.push('RHS');
+        if (showFooter) groupCols.push('Footer');
+        if (showCta)    groupCols.push('CTA');
+        if (!groupCols.length) return '<p style="color:#888;padding:16px;">Select at least one column group above.</p>';
+
+        let thead = '<tr>'
+          + '<th rowspan="2">Local URL</th>'
+          + '<th rowspan="2">English URL</th>'
+          + '<th rowspan="2">Lang</th>'
+          + '<th rowspan="2">Product</th>';
+        groupCols.forEach(g => {
+          const cols = g === 'CTA' ? 3 : 2;
+          const gc = g === 'LHS' ? 'hdr-lhs' : g === 'RHS' ? 'hdr-rhs' : g === 'Footer' ? 'hdr-ftr' : 'hdr-cta';
+          thead += '<th colspan="' + cols + '" class="cmp-hdr-group ' + gc + '">' + g + '</th>';
+        });
+        thead += '</tr><tr>';
+        groupCols.forEach(g => {
+          const secColor = g === 'LHS' ? 'hdr-lhs' : g === 'RHS' ? 'hdr-rhs' : g === 'Footer' ? 'hdr-ftr' : 'hdr-cta';
+          if (g === 'CTA') {
+            thead += '<th class="cmp-hdr-local ' + secColor + '">Local</th><th class="cmp-hdr-local ' + secColor + '">Pattern</th><th class="cmp-hdr-en ' + secColor + '">EN</th>';
+          } else {
+            thead += '<th class="cmp-hdr-local ' + secColor + '">Local</th><th class="cmp-hdr-en ' + secColor + '">EN</th>';
+          }
+        });
+        thead += '</tr>';
+
+        let tbody = '';
+        rows.forEach(r => {
+          const isSame      = r.already_english;
+          const localFailed = r.local_load_error;
+          const enFailed    = r.en_load_error;
+          const enErrMsg    = r.en_error_msg || 'Unable to find page';
+          const localErrMsg = r.local_error_msg || 'Unable to load page';
+          const enUrlCell = isSame
+            ? '<em style="color:#999">same (already EN)</em>'
+            : escapeHtml(r.english_url || '');
+          const totalDataCols = (showLhs?2:0)+(showRhs?2:0)+(showFooter?2:0)+(showCta?3:0);
+
+          const localErrorCell = (cols) => `<td colspan="${cols}"
+            style="background:#fff8e1;color:#e65100;font-size:11px;font-weight:600;text-align:center;">
+            ⚠ Invalid URL — page not loaded
+          </td>`;
+          const enErrorCell = `<td colspan="${totalDataCols}"
+            style="background:#fff0f0;color:#c0392b;font-size:11px;font-weight:600;text-align:center;">
+            ⚠ Unable to find English page
+          </td>`;
+
+          // Summary row
+          let summaryRow = `<tr>
+            <td class="cmp-url">${escapeHtml(r.local_url||'')}</td>
+            <td class="cmp-url" style="color:#1565c0;">${enUrlCell}</td>
+            <td style="font-size:11px;">${escapeHtml(r.language||'EN')}</td>
+            <td style="font-size:11px;">${escapeHtml(r.product||'')}</td>`;
+
+          // Section detail row
+          let secRow = `<tr style="background:#fafafa;border-bottom:2px solid #e0e0e0;">
+            <td colspan="4" style="font-size:10px;color:#888;padding-left:12px;">Sections ↓</td>`;
+
+          if (localFailed) {
+            summaryRow += localErrorCell(totalDataCols);
+            secRow += `<td colspan="${totalDataCols}" style="background:#fff8e1;font-size:10px;color:#e65100;padding-left:8px;">
+              ${escapeHtml(localErrMsg)}
+            </td>`;
+          } else if (enFailed) {
+            summaryRow += enErrorCell;
+            const secCols = totalDataCols;
+            secRow += `<td colspan="${secCols}" style="background:#fff0f0;font-size:10px;color:#c0392b;padding-left:8px;">
+              ${escapeHtml(enErrMsg)}
+            </td>`;
+          } else {
+            if (showLhs) {
+              const lLocal = (r.local_lhs_detected ? 'Available — ' : 'Not available — ') + (r.local_lhs_links||0) + ' links';
+              const lEn    = (r.en_lhs_detected    ? 'Available — ' : 'Not available — ') + (r.en_lhs_links   ||0) + ' links';
+              const match  = r.local_lhs_detected === r.en_lhs_detected && r.local_lhs_links === r.en_lhs_links;
+              const cls    = match ? 'cmp-match' : '';
+              summaryRow += `<td class="col-lhs ${cls}" style="font-size:11px;">${escapeHtml(lLocal)}</td>
+                             <td class="col-lhs ${cls}" style="font-size:11px;">${escapeHtml(lEn)}</td>`;
+              const lSecL = r.local_lhs_sections ? r.local_lhs_sections.split(' | ') : [];
+              const lSecE = r.en_lhs_sections    ? r.en_lhs_sections.split(' | ')    : [];
+              secRow += `<td class="cmp-sec col-lhs">${lSecL.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>
+                         <td class="cmp-sec col-lhs">${lSecE.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
+            }
+            if (showRhs) {
+              const rLocal = (r.local_rhs_detected ? 'Available — ' : 'Not available — ') + (r.local_rhs_links||0) + ' links';
+              const rEn    = (r.en_rhs_detected    ? 'Available — ' : 'Not available — ') + (r.en_rhs_links   ||0) + ' links';
+              const match  = r.local_rhs_detected === r.en_rhs_detected && r.local_rhs_links === r.en_rhs_links;
+              const cls    = match ? 'cmp-match' : '';
+              summaryRow += `<td class="col-rhs ${cls}" style="font-size:11px;">${escapeHtml(rLocal)}</td>
+                             <td class="col-rhs ${cls}" style="font-size:11px;">${escapeHtml(rEn)}</td>`;
+              const rSecL = r.local_rhs_sections ? r.local_rhs_sections.split(' | ') : [];
+              const rSecE = r.en_rhs_sections    ? r.en_rhs_sections.split(' | ')    : [];
+              secRow += `<td class="cmp-sec col-rhs">${rSecL.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>
+                         <td class="cmp-sec col-rhs">${rSecE.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
+            }
+            if (showFooter) {
+              const ftL  = r.local_footer_detected ? 'Available' : 'Not available';
+              const ftE  = r.en_footer_detected    ? 'Available' : 'Not available';
+              const match = r.local_footer_detected === r.en_footer_detected;
+              const cls  = match ? 'cmp-match' : '';
+              summaryRow += `<td class="col-ftr ${cls}" style="font-size:11px;">${ftL}</td>
+                             <td class="col-ftr ${cls}" style="font-size:11px;">${ftE}</td>`;
+              secRow += `<td class="cmp-sec col-ftr" colspan="2" style="font-size:10px;">
+                           <b>Local:</b> ${escapeHtml(r.local_footer_tabs||'—')}<br>
+                           <b>EN:</b> ${escapeHtml(r.en_footer_tabs||'—')}
+                         </td>`;
+            }
+            if (showCta) {
+              const ctaPatternBadge = p => {
+                if (p === 'form-panel')
+                  return '<span style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;">Form Panel</span>';
+                if (p === 'floating-buttons')
+                  return '<span style="background:#fef9c3;color:#854d0e;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;">Floating</span>';
+                if (p === 'sliding-buttons')
+                  return '<span style="background:#dcfce7;color:#166534;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;">Sliding</span>';
+                return '<span style="color:#bbb;font-size:10px;">—</span>';
+              };
+              const cLocal = r.local_cta_detected ? 'Available — ' + escapeHtml(r.local_cta_text||'') : 'Not available';
+              const cEn    = r.en_cta_detected    ? 'Available — ' + escapeHtml(r.en_cta_text   ||'') : 'Not available';
+              const match  = r.local_cta_detected === r.en_cta_detected;
+              const cls    = match ? 'cmp-match' : '';
+              summaryRow += `<td class="col-cta ${cls}" style="font-size:11px;">${cLocal}</td>
+                             <td class="col-cta" style="text-align:center;">${ctaPatternBadge(r.local_cta_pattern)}</td>
+                             <td class="col-cta ${cls}" style="font-size:11px;">${cEn}</td>`;
+              secRow += `<td class="cmp-sec col-cta" colspan="3" style="font-size:10px;">
+                           <b>Local pattern:</b> ${escapeHtml(r.local_cta_pattern||'—')} &nbsp;|&nbsp;
+                           <b>EN pattern:</b> ${escapeHtml(r.en_cta_pattern||'—')}
+                         </td>`;
+            }
+          }
+
+          summaryRow += '</tr>';
+          secRow     += '</tr>';
+          tbody += summaryRow + secRow;
+        });
+
+        return '<table class="results-table" style="margin-top:0;font-size:12px;">'
+             + '<thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>';
+      }
+
+      function refreshComparisonTable() {
+        const showLhs    = document.getElementById('cmp-opt-lhs').checked;
+        const showRhs    = document.getElementById('cmp-opt-rhs').checked;
+        const showFooter = document.getElementById('cmp-opt-footer').checked;
+        const showCta    = document.getElementById('cmp-opt-cta').checked;
+        document.getElementById('cmp-table-area').innerHTML = buildComparisonTable(_cmpRows, showLhs, showRhs, showFooter, showCta);
+      }
+
+      function downloadComparisonCSV() {
+        if (!_cmpRows || _cmpRows.length === 0) return;
+        const showLhs    = document.getElementById('cmp-opt-lhs').checked;
+        const showRhs    = document.getElementById('cmp-opt-rhs').checked;
+        const showFooter = document.getElementById('cmp-opt-footer').checked;
+
+        const showCta    = document.getElementById('cmp-opt-cta').checked;
+        const headers = ['local_url', 'english_url', 'language', 'product', 'already_english', 'local_load_error', 'local_error_msg', 'en_load_error', 'en_error_msg'];
+        if (showLhs) {
+          headers.push('local_lhs_detected','local_lhs_links','local_lhs_sections','local_lhs_related',
+                       'en_lhs_detected','en_lhs_links','en_lhs_sections','en_lhs_related');
+        }
+        if (showRhs) {
+          headers.push('local_rhs_detected','local_rhs_links','local_rhs_sections',
+                       'en_rhs_detected','en_rhs_links','en_rhs_sections');
+        }
+        if (showFooter) {
+          headers.push('local_footer_detected','local_footer_tabs',
+                       'en_footer_detected','en_footer_tabs');
+        }
+        if (showCta) {
+          headers.push('local_cta_detected','local_cta_pattern','local_cta_text',
+                       'en_cta_detected','en_cta_pattern','en_cta_text');
+        }
+
+        const escape = v => {
+          if (v === null || v === undefined) return '';
+          if (v === true  || v === 'true')  return 'Available';
+          if (v === false || v === 'false') return 'Not available';
+          const s = String(v);
+          return s.includes(',') || s.includes('"') || s.includes('\n')
+            ? '"' + s.replace(/"/g, '""') + '"' : s;
+        };
+
+        const lines = [headers.join(',')];
+        _cmpRows.forEach(r => {
+          lines.push(headers.map(h => escape(r[h])).join(','));
+        });
+
+        const blob = new Blob([lines.join('\r\n')], {type: 'text/csv'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'comparison_report.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      async function downloadComparisonExcel() {
+        if (!_cmpRows || _cmpRows.length === 0) return;
+        const resp = await fetch('/api/download-comparison-excel', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({rows: _cmpRows}),
+        });
+        if (!resp.ok) {
+          const ct = resp.headers.get('content-type') || '';
+          const msg = ct.includes('json') ? (await resp.json()).error : await resp.text();
+          alert('Excel generation failed: ' + msg);
+          return;
+        }
+        const blob = await resp.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'comparison_report.xlsx';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      function formatComparisonResults(compRows) {
+        if (!compRows || compRows.length === 0) return '<p>No comparison results.</p>';
+        _cmpRows = compRows;
+
+        const filterBar = `
+          <div style="display:flex;align-items:center;gap:16px;padding:10px 0 14px;flex-wrap:wrap;">
+            <span style="font-weight:600;font-size:13px;color:#555;">Show columns:</span>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+              <input type="checkbox" id="cmp-opt-lhs" checked onchange="refreshComparisonTable()"> 📋 LHS
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+              <input type="checkbox" id="cmp-opt-rhs" checked onchange="refreshComparisonTable()"> 📌 RHS
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+              <input type="checkbox" id="cmp-opt-footer" checked onchange="refreshComparisonTable()"> 🔍 Footer
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+              <input type="checkbox" id="cmp-opt-cta" checked onchange="refreshComparisonTable()"> 🎯 CTA
+            </label>
+          </div>`;
+
+        const styles = `<style>
+          .cmp-match { background:#f0fdf4; }
+          .cmp-local { background:#fff7ed; }
+          .cmp-en    { background:#eff6ff; }
+          .cmp-hdr-local { background:#fed7aa; font-weight:600; font-size:11px; text-align:center; }
+          .cmp-hdr-en    { background:#bfdbfe; font-weight:600; font-size:11px; text-align:center; }
+          .cmp-hdr-group { background:#e5e7eb; font-weight:700; font-size:12px; text-align:center; }
+          .cmp-url { font-size:11px; word-break:break-all; max-width:200px; }
+          .cmp-sec  { font-size:11px; color:#444; max-width:220px; }
+        </style>`;
+
+        const legend = `<div style="display:flex;gap:16px;font-size:11px;margin-bottom:10px;flex-wrap:wrap;">
+          <span><span style="background:#f0fdf4;padding:2px 8px;border-radius:3px;">■</span> Match</span>
+          <span><span style="background:#fff7ed;padding:2px 8px;border-radius:3px;">■</span> Local ≠ EN</span>
+          <span><span style="background:#eff6ff;padding:2px 8px;border-radius:3px;">■</span> EN ≠ Local</span>
+        </div>`;
+
+        const download = '<div style="margin-top:16px;display:flex;gap:12px;">'
+                       + '<button class="download-link" onclick="downloadComparisonCSV()">⬇ Download Comparison CSV</button>'
+                       + '<button class="download-link" style="background:#1565c0;" onclick="downloadComparisonExcel()">⬇ Download Comparison Excel</button>'
+                       + '</div>';
+
+        const tableHtml = buildComparisonTable(compRows, true, true, true, true);
+
+        return styles + filterBar + legend
+             + '<div id="cmp-table-area">' + tableHtml + '</div>'
+             + download;
+      }
+
+      function renderAuditTabs(successMsg, rows, compRows) {
+        const doFooter  = document.getElementById('opt-footer').checked;
+        const doLhs     = document.getElementById('opt-lhs').checked;
+        const doRhs     = document.getElementById('opt-rhs').checked;
+        const doCta     = document.getElementById('opt-cta').checked;
+        const doCompare = document.getElementById('opt-compare').checked;
+        if (!doFooter && !doLhs && !doRhs && !doCta && !doCompare) {
+          return '<div class="error">✗ Please select at least one audit type before checking.</div>';
+        }
+        let html = '<div class="success">' + escapeHtml(successMsg) + '</div>';
+
+        const tabs = [];
+        if (doFooter)  tabs.push({key:'footer',  label:'🔍 Footer Audit'});
+        if (doLhs)     tabs.push({key:'lhs',     label:'📋 LHS Audit'});
+        if (doRhs)     tabs.push({key:'rhs',     label:'📌 RHS Audit'});
+        if (doCta)     tabs.push({key:'cta',     label:'🎯 RHS Floating CTA'});
+        if (doCompare && compRows) tabs.push({key:'compare', label:'🔄 Comparison'});
+
+        if (tabs.length > 1) {
+          html += '<div class="result-tabs">'
+               + tabs.map((t, i) =>
+                   '<button class="result-tab-btn' + (i===0?' active':'') + '" onclick="switchResultTab(\'' + t.key + '\',this)">' + t.label + '</button>'
+                 ).join('')
+               + '</div>';
+          let first = true;
+          const pane = (key, content) => {
+            const cls = 'result-tab-content' + (first ? ' active' : '');
+            first = false;
+            return '<div class="' + cls + '" data-tab="' + key + '">' + content + '</div>';
+          };
+          if (doFooter)               html += pane('footer',  formatResults(rows));
+          if (doLhs)                  html += pane('lhs',     formatLhsResults(rows));
+          if (doRhs)                  html += pane('rhs',     formatRhsResults(rows));
+          if (doCta)                  html += pane('cta',     formatCtaResults(rows));
+          if (doCompare && compRows)  html += pane('compare', formatComparisonResults(compRows));
+        } else if (doFooter)  { html += formatResults(rows); }
+          else if (doLhs)     { html += formatLhsResults(rows); }
+          else if (doRhs)     { html += formatRhsResults(rows); }
+          else if (doCta)     { html += formatCtaResults(rows); }
+          else if (doCompare && compRows) { html += formatComparisonResults(compRows); }
+        return html;
+      }
+
+      function formatResults(rows) {
+        if (!rows || rows.length === 0) return '<p>No results.</p>';
+
+        const products = new Set(rows.map(r => r.product));
+        const showAdaudit       = products.has('ADAudit Plus');
+        const showAdmanager     = products.has('ADManager Plus');
+        const showSelfservice   = products.has('ADSelfService Plus');
+        const showEventlog      = products.has('EventLog Analyzer');
+        const showDatasecurity  = products.has('DataSecurity Plus');
+        const showCloudsecurity = products.has('Cloud Security Plus');
+
+        // All products without hardcoded column layouts get dynamic tab columns
+        // built from their actual detected_tabs values — works for any language.
+        const PREDEFINED = new Set(['ADAudit Plus','ADManager Plus','ADSelfService Plus','EventLog Analyzer','DataSecurity Plus','Cloud Security Plus']);
+        const PROD_HDR_BG = {
+          'Log360':'#fff3e0','Exchange Reporter Plus':'#e8eaf6',
+          'M365 Manager Plus':'#fff9c4','RecoveryManager Plus':'#fbe9e7',
+          'SharePoint Manager Plus':'#e0f7fa','M365 Security Plus':'#f3e5f5',
+        };
+        const PROD_CELL_BG = {
+          'Log360':'#fffbf0','DataSecurity Plus':'#fff5f7','Exchange Reporter Plus':'#f3f4ff',
+          'M365 Manager Plus':'#fffde8','RecoveryManager Plus':'#fff5f2',
+          'SharePoint Manager Plus':'#e8feff','M365 Security Plus':'#fce4ff',
+        };
+
+        // Collect unique tab labels per dynamic product (in order of first appearance)
+        const dynProds = [...products].filter(p => p && !PREDEFINED.has(p)).sort();
+        const productTabMap = {};
+        dynProds.forEach(prod => {
+          const seen = new Set(), tabs = [];
+          rows.filter(r => r.product === prod && r.detected_tabs).forEach(r => {
+            r.detected_tabs.split(' | ').forEach(t => {
+              const tab = t.trim();
+              if (tab && !seen.has(tab)) { seen.add(tab); tabs.push(tab); }
+            });
+          });
+          productTabMap[prod] = tabs.length ? tabs : ['Related Prod'];
+        });
+
+        // Header row 1 — product group labels
+        let hGroup = '<tr><th>URL</th><th>Language</th><th>Product</th><th class="hdr-ftr">Status</th><th class="hdr-ftr">Detected</th>';
+        if (showAdaudit)      hGroup += '<th colspan="6" style="text-align:center;background:#e3f2fd;">ADAudit Plus</th>';
+        if (showAdmanager)    hGroup += '<th colspan="6" style="text-align:center;background:#e8f5e9;">ADManager Plus</th>';
+        if (showSelfservice)  hGroup += '<th colspan="5" style="text-align:center;background:#ede7f6;">ADSelfService Plus</th>';
+        if (showEventlog)     hGroup += '<th colspan="5" style="text-align:center;background:#e0f2f1;">EventLog Analyzer</th>';
+        if (showDatasecurity)  hGroup += '<th colspan="5" style="text-align:center;background:#fce4ec;">DataSecurity Plus</th>';
+        if (showCloudsecurity) hGroup += '<th colspan="2" style="text-align:center;background:#e8f5e9;">Cloud Security Plus</th>';
+        dynProds.forEach(prod => {
+          const tabs = productTabMap[prod];
+          const bg = PROD_HDR_BG[prod] || '#f5f5f5';
+          hGroup += '<th colspan="' + tabs.length + '" style="text-align:center;background:' + bg + ';">' + escapeHtml(prod) + '</th>';
+        });
+        hGroup += '</tr>';
+
+        // Header row 2 — column names
+        let hCols = '<tr><th></th><th></th><th></th><th class="hdr-ftr"></th><th class="hdr-ftr"></th>';
+        if (showAdaudit) {
+          hCols += '<th style="background:#e3f2fd;">AD</th><th style="background:#e3f2fd;">File Srv</th>'
+                 + '<th style="background:#e3f2fd;">Win Srv</th><th style="background:#e3f2fd;">Workstation</th>'
+                 + '<th style="background:#e3f2fd;">Compliance</th><th style="background:#e3f2fd;">Related</th>';
+        }
+        if (showAdmanager) {
+          hCols += '<th style="background:#e8f5e9;">Highlights</th><th style="background:#e8f5e9;">AD Mgmt</th>'
+                 + '<th style="background:#e8f5e9;">AD Reports</th><th style="background:#e8f5e9;">Exchange Mgmt</th>'
+                 + '<th style="background:#e8f5e9;">Popular Prod</th><th style="background:#e8f5e9;">Related Prod</th>';
+        }
+        if (showSelfservice) {
+          hCols += '<th style="background:#ede7f6;">Pwd Mgmt</th><th style="background:#ede7f6;">Adaptive MFA</th>'
+                 + '<th style="background:#ede7f6;">Enterprise SSO</th><th style="background:#ede7f6;">Self-Svc & Sec</th>'
+                 + '<th style="background:#ede7f6;">Related Prod</th>';
+        }
+        if (showEventlog) {
+          hCols += '<th style="background:#e0f2f1;">Log Mgmt</th><th style="background:#e0f2f1;">IT Compliance</th>'
+                 + '<th style="background:#e0f2f1;">Log Analyzer</th><th style="background:#e0f2f1;">Quick Links</th>'
+                 + '<th style="background:#e0f2f1;">Related Prod</th>';
+        }
+        if (showDatasecurity) {
+          hCols += '<th style="background:#fce4ec;">Solutions</th><th style="background:#fce4ec;">Reg. Compliance</th>'
+                 + '<th style="background:#fce4ec;">Resources</th><th style="background:#fce4ec;">Quick Links</th>'
+                 + '<th style="background:#fce4ec;">Related Prod</th>';
+        }
+        if (showCloudsecurity) {
+          hCols += '<th style="background:#e8f5e9;">Highlights</th>'
+                 + '<th style="background:#e8f5e9;">Related Prod</th>';
+        }
+        dynProds.forEach(prod => {
+          const bg = PROD_HDR_BG[prod] || '#f0f0f0';
+          productTabMap[prod].forEach(tab => {
+            hCols += '<th style="background:' + bg + ';">' + escapeHtml(tab) + '</th>';
+          });
+        });
+        hCols += '</tr>';
+
+        let html = '<table class="results-table"><thead>' + hGroup + hCols + '</thead><tbody>';
+
+        // Normalise a tab string the same way Python does: lowercase, strip combining accents,
+        // collapse non-letter/digit chars to spaces. Uses Unicode property escapes (\p{L}\p{N})
+        // so non-Latin scripts (Greek, Cyrillic, Arabic, etc.) are preserved, not stripped.
+        function normTab(s) {
+          return (s || '').toLowerCase()
+            .normalize('NFD').replace(/[̀-ͯ]/g, '')
+            .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+        }
+        // Test whether a normalised tab string contains any of the given regex alternatives.
+        function tabHas(norm, rx) { return rx.test(norm); }
+
+        rows.forEach(row => {
+          const fetchFailed = row.note && row.note.startsWith('Fetch failed');
+          const statusClass = fetchFailed ? 'status-warn' : (row.footer_detected ? 'status-ok' : 'status-err');
+          const statusLabel = fetchFailed ? 'Invalid URL' : row.footer_status;
+          // Pre-compute the set of tabs actually present on this row (for dynamic products)
+          const rowTabSet = new Set((row.detected_tabs || '').split(' | ').map(t => t.trim()));
+          // Normalised tab text — used for all predefined product tick marks (language-agnostic)
+          const nt = normTab(row.detected_tabs);
+          html += '<tr>';
+          const tabsPreview = row.detected_tabs || '⚠ none';
+          html += '<td>' + escapeHtml(row.url.substring(0, 45)) + '...<br><small style="color:#888;font-size:10px;">tabs: ' + escapeHtml(tabsPreview) + '</small></td>';
+          html += '<td style="font-size:12px;color:#555;">' + escapeHtml(row.language || 'English') + '</td>';
+          html += '<td style="font-size:11px;color:#666;">' + escapeHtml(row.product || '') + '</td>';
+          html += '<td class="col-ftr"><span class="status-badge ' + statusClass + '">' + escapeHtml(statusLabel) + '</span></td>';
+          const tabsInfo = row.detected_tabs ? row.detected_tabs : '(no tabs extracted — urllib fallback)';
+          html += '<td class="col-ftr" title="Detected tabs: ' + escapeHtml(tabsInfo) + '">' + bool(row.footer_detected) + '</td>';
+          if (showAdaudit) {
+            const aa = row.product === 'ADAudit Plus';
+            html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /active.?directory/)) + '</td>';
+            html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /file.?server|servidor.?de.?archivos|servidores.?de.?archivos|serveur.?de.?fichiers|dateiserver|servidor.?de.?arquivos|server.?di.?file|bestandsserver|dosya.?sunucusu|serwer.?plikow|serwery.?plikow/)) + '</td>';
+            html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /windows.?server|servidores.?windows|servidor.?windows/)) + '</td>';
+            html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /workstation|estacion.?de.?trabajo|station.?de.?travail|arbeitsstation|arbeitsplatz|estacao.?de.?trabalho|postazione|werkstation|is.?istasyonu|stacja.?robocza|stacje.?robocze/)) + '</td>';
+            html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /compliance|cumplimiento|conformite|einhaltung|conformidade|conformita|naleving|uyumluluk|zgodnosc/)) + '</td>';
+            html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /related.?products|relaterede.?produkter|relaterade.?produkter|relaterte.?produkter|gerelateerde|productos.?relacionados|produits.?conn|verwandte|produtos.?relacionados|prodotti.?correlati|ilgili|produkty.?powiazane|powiazane.?produkty|souvisejici.?produkty|kapcsolodo.?termekek|liittyvat.?tuotteet|produse.?inrudite|suvisiace.?produkty|σχετικα.?προιοντα|связанные.?продукты/)) + '</td>';
+          }
+          if (showAdmanager) {
+            const am = row.product === 'ADManager Plus';
+            html += '<td style="background:#f9fff9;">' + bool(am && tabHas(nt, /highlights|funcionalidades|destacados|points.?forts|hoogtepunten|destaques|punti.?salienti/)) + '</td>';
+            html += '<td style="background:#f9fff9;">' + bool(am && tabHas(nt, /ad.?management|gestion.?de.?active|gestion.?de.?ad|gestion.?ad|administracion.?ad|ad.?verwaltung|gerenciamento.*ad|gestione.?ad|ad.?beheer|ad.?yonetimi/)) + '</td>';
+            html += '<td style="background:#f9fff9;">' + bool(am && tabHas(nt, /active.?directory.?reports|informes.?de.?active|informes.?de.?ad|berichte|rapports.*directory|relatorios.*directory|report.?di.?active|rapporten/)) + '</td>';
+            html += '<td style="background:#f9fff9;">' + bool(am && tabHas(nt, /exchange.?management|gestion.?de.?ms.?exchange|gestion.*exchange|gerenciamento.*exchange|exchange.*verwaltung/)) + '</td>';
+            html += '<td style="background:#f9fff9;">' + bool(am && tabHas(nt, /popular.?products|productos.?populares|produits.?populaires|beliebte|populaire.?producten|prodotti.?popolari|populer|produtos.?populares/)) + '</td>';
+            html += '<td style="background:#f9fff9;">' + bool(am && tabHas(nt, /related.?products|relaterede.?produkter|relaterade.?produkter|relaterte.?produkter|gerelateerde|productos.?relacionados|produits.?conn|verwandte|zugehorig|produtos.?relacionados|prodotti.?correlati|ilgili|produkty.?powiazane|powiazane.?produkty|souvisejici.?produkty|kapcsolodo.?termekek|liittyvat.?tuotteet|produse.?inrudite|suvisiace.?produkty|σχετικα.?προιοντα|связанные.?продукты|popular.?products|beliebte|productos.?populares|produits.?populaires|produtos.?populares|prodotti.?popolari|populaire.?producten|populer/)) + '</td>';
+          }
+          if (showSelfservice) {
+            const ss = row.product === 'ADSelfService Plus';
+            html += '<td style="background:#f5f0ff;">' + bool(ss && tabHas(nt, /password.?management|wachtwoordbeheer|kennwortmanagement|gestion.?des.?mots|gestion.?de.?contrasenas|administracion.?de.?contrasenas|gerenciamento.?de.?senhas|gestione.?delle.?password|parola.?yonetimi/)) + '</td>';
+            html += '<td style="background:#f5f0ff;">' + bool(ss && tabHas(nt, /adaptive.?mfa|adaptiver.?mfa|adaptives.?mfa|mfa.?adaptativ|mfa.?adaptable|mfa.?adattivo|adaptieve.?mfa|uyarlanabilir.?mfa/)) + '</td>';
+            html += '<td style="background:#f5f0ff;">' + bool(ss && tabHas(nt, /enterprise.?sso|corporate.?sso|firmen.?sso|sso.?entreprise|sso.?empresarial|sso.?para.?empresas|sso.?aziendale|zakelijke.?sso|kurumsal.?sso/)) + '</td>';
+            html += '<td style="background:#f5f0ff;">' + bool(ss && tabHas(nt, /self.?service.?security|autoservicio.?y.?seguridad|autoservicio.?seguridad|autoatendimento.?e.?seguranca|selfservice.?et.?securite|selfservice.?und.?sicherheit|selfservice.?e.?sicurezza|selfservice.?en.?beveiliging|selfservis.?ve.?guvenlik/)) + '</td>';
+            html += '<td style="background:#f5f0ff;">' + bool(ss && tabHas(nt, /related.?products|relaterede.?produkter|relaterade.?produkter|relaterte.?produkter|gerelateerde|productos.?relacionados|produits.?conn|verwandte|zugehorig|produtos.?relacionados|prodotti.?correlati|ilgili|produkty.?powiazane|powiazane.?produkty|souvisejici.?produkty|kapcsolodo.?termekek|liittyvat.?tuotteet|produse.?inrudite|suvisiace.?produkty|σχετικα.?προιοντα|связанные.?продукты/)) + '</td>';
+          }
+          if (showEventlog) {
+            const el = row.product === 'EventLog Analyzer';
+            // hasTabs: Playwright extracted real DOM tab labels → use JS regex (language-aware).
+            // No tabs (Playwright failed, urllib fallback) → use Python found_elements booleans.
+            const hasTabs = el && !!(row.detected_tabs && row.detected_tabs.trim());
+            html += '<td style="background:#e8f8f7;">' + bool(el && (hasTabs ? tabHas(nt, /log.?management|gestion.?de.?registros|administracion.?de.?logs|gerenciamento.?de.?logs|log.?verwaltung|gestion.?des.?journaux|gestione.?log|zarzadzanie.?dziennikami/) : row.log_management)) + '</td>';
+            html += '<td style="background:#e8f8f7;">' + bool(el && (hasTabs ? tabHas(nt, /it.?compliance|cumplimiento.?de.?ti|conformidade.?de.?ti|conformite.?it|it.?konformitat|conformita.?it|zgodnosc.?it/) : row.it_compliance)) + '</td>';
+            html += '<td style="background:#e8f8f7;">' + bool(el && (hasTabs ? tabHas(nt, /log.?analy[sz]|log.?analyse|analizador.?de.?registros|analisis.?de.?logs|analisador.?de.?logs|log.?analysator|analyseur.?de.?journaux|analizzatore|analizator.?dziennikow/) : row.log_analyzer)) + '</td>';
+            html += '<td style="background:#e8f8f7;">' + bool(el && (hasTabs ? tabHas(nt, /quick.?links|enlaces.?rapidos|vinculos.?rapidos|links.?rapidos|schnellzugriff|schnelllinks|liens.?rapides|link.?rapidi|snelkoppelingen|hizli|szybkie.?linki/) : row.quick_links)) + '</td>';
+            html += '<td style="background:#e8f8f7;">' + bool(el && (hasTabs ? tabHas(nt, /related.?products|relaterede.?produkter|relaterade.?produkter|relaterte.?produkter|gerelateerde|productos.?relacionados|produits.?conn|verwandte|produtos.?relacionados|prodotti.?correlati|ilgili|produkty.?powiazane|powiazane.?produkty|souvisejici.?produkty|kapcsolodo.?termekek|liittyvat.?tuotteet|produse.?inrudite|suvisiace.?produkty|σχετικα.?προιοντα|связанные.?продукты/) : row.related_products)) + '</td>';
+          }
+          if (showDatasecurity) {
+            const ds = row.product === 'DataSecurity Plus';
+            html += '<td style="background:#fef6f8;">' + bool(ds && tabHas(nt, /solutions?|soluciones|solucoes|lösungen|losungen|soluzioni|oplossingen|çözümler|cozumler/)) + '</td>';
+            html += '<td style="background:#fef6f8;">' + bool(ds && tabHas(nt, /regulatory.?compliance|cumplimiento.?de.?la.?normativa|cumplimiento.?normativ|conformidade.?regulat|conformite.?reglementaire|gesetzliche.?compliance|regulatorische.?compliance|conformita.?normativa|regelgeving.?compliance|duzenleyici.?uyumluluk/)) + '</td>';
+            html += '<td style="background:#fef6f8;">' + bool(ds && tabHas(nt, /\bresources?\b|\brecursos\b|ressourcen|ressources|risorse|hulpbronnen|kaynaklar/)) + '</td>';
+            html += '<td style="background:#fef6f8;">' + bool(ds && tabHas(nt, /quick.?links?|snelkoppelingen|schnellzugriff|schnelllinks|liens.?rapides|enlaces.?rapidos|vinculos.?rapidos|links.?rapidos|link.?rapidi|hizli/)) + '</td>';
+            html += '<td style="background:#fef6f8;">' + bool(ds && tabHas(nt, /related.?products|relaterede.?produkter|relaterade.?produkter|relaterte.?produkter|gerelateerde|productos.?relacionados|produits.?conn|verwandte|produtos.?relacionados|prodotti.?correlati|ilgili|produkty.?powiazane|powiazane.?produkty|souvisejici.?produkty|kapcsolodo.?termekek|liittyvat.?tuotteet|produse.?inrudite|suvisiace.?produkty|σχετικα.?προιοντα|связанные.?продукты/)) + '</td>';
+          }
+          if (showCloudsecurity) {
+            const cs = row.product === 'Cloud Security Plus';
+            html += '<td style="background:#f1f9f1;">' + bool(cs && tabHas(nt, /highlights|hoogtepunten|aspectos.?principales|destacados|points.?forts|destaques|punti.?salienti|one.?cikanlar/)) + '</td>';
+            html += '<td style="background:#f1f9f1;">' + bool(cs && tabHas(nt, /related.?products|relaterede.?produkter|relaterade.?produkter|relaterte.?produkter|gerelateerde|productos.?relacionados|produits.?conn|verwandte|produtos.?relacionados|prodotti.?correlati|ilgili|produkty.?powiazane|powiazane.?produkty|souvisejici.?produkty|kapcsolodo.?termekek|liittyvat.?tuotteet|produse.?inrudite|suvisiace.?produkty|σχετικα.?προιοντα|связанные.?продукты/)) + '</td>';
+          }
+          // Dynamic-tab products: one column per unique tab found across all rows for that product
+          dynProds.forEach(prod => {
+            const bg = PROD_CELL_BG[prod] || '#fafafa';
+            productTabMap[prod].forEach(tab => {
+              const present = row.product === prod && (
+                tab === 'Related Prod' ? row.related_products : rowTabSet.has(tab)
+              );
+              html += '<td style="background:' + bg + ';">' + bool(present) + '</td>';
+            });
+          });
+          html += '</tr>';
+        });
+
+        html += '</tbody></table><div style="margin-top: 16px; display: flex; gap: 12px;">'
+              + '<a href="/download" class="download-link">⬇ Download CSV Report</a>'
+              + '<a href="/download-excel" class="download-link" style="background:#1565c0;">⬇ Download Excel</a>'
+              + '<a href="/download-readme" class="download-link" style="background:#1976d2;">⬇ Download README</a>'
+              + '</div>';
+        return html;
+      }
+
+      function escapeHtml(text) {
+        const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+        return text.replace(/[&<>"']/g, m => map[m]);
+      }
+
+      function getAuditType() {
+        const doFooter  = document.getElementById('opt-footer').checked;
+        const doLhs     = document.getElementById('opt-lhs').checked;
+        const doRhs     = document.getElementById('opt-rhs').checked;
+        const doCta     = document.getElementById('opt-cta').checked;
+        const _types    = [doFooter&&'footer', doLhs&&'lhs', doRhs&&'rhs', doCta&&'cta'].filter(Boolean);
+        return _types.length === 4 ? 'both' : _types.join(',') || 'footer';
+      }
+
+      async function auditSingleURL() {
+        const url = document.getElementById('single-url-input').value.trim();
+        if (!url) {
+          document.getElementById('single-message').innerHTML = '<div class="error">Please enter a URL.</div>';
+          return;
+        }
+        document.getElementById('single-loading').classList.add('show');
+        document.getElementById('single-message').innerHTML = '';
+        document.getElementById('single-results').innerHTML = '';
+        try {
+          const doCompare = document.getElementById('opt-compare').checked;
+          const audit_type = getAuditType();
+          const endpoint = doCompare ? '/api/audit-comparison' : '/api/audit-single';
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({urls: url + '\n', url, audit_type})
+          });
+          const data = await resp.json();
+          if (resp.ok) {
+            document.getElementById('single-results').innerHTML = renderAuditTabs('✓ Audit completed', data.results, data.comparison || null);
+          } else {
+            document.getElementById('single-message').innerHTML = '<div class="error">✗ ' + escapeHtml(data.error) + '</div>';
+          }
+        } catch (e) {
+          document.getElementById('single-message').innerHTML = '<div class="error">✗ Error: ' + escapeHtml(e.message) + '</div>';
+        } finally {
+          document.getElementById('single-loading').classList.remove('show');
+        }
+      }
+
+      async function auditBatchURLs() {
+        const urls = document.getElementById('batch-urls-input').value.trim();
+        if (!urls) {
+          document.getElementById('batch-message').innerHTML = '<div class="error">Please enter at least one URL.</div>';
+          return;
+        }
+        document.getElementById('batch-loading').classList.add('show');
+        document.getElementById('batch-message').innerHTML = '';
+        document.getElementById('batch-results').innerHTML = '';
+        try {
+          const doCompare = document.getElementById('opt-compare').checked;
+          const audit_type = getAuditType();
+          const endpoint = doCompare ? '/api/audit-comparison' : '/api/audit-batch';
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({urls, audit_type})
+          });
+          const data = await resp.json();
+          if (resp.ok) {
+            const count = data.results.length;
+            document.getElementById('batch-results').innerHTML = renderAuditTabs('✓ Audit completed (' + count + ' URLs)', data.results, data.comparison || null);
+          } else {
+            document.getElementById('batch-message').innerHTML = '<div class="error">✗ ' + escapeHtml(data.error) + '</div>';
+          }
+        } catch (e) {
+          document.getElementById('batch-message').innerHTML = '<div class="error">✗ Error: ' + escapeHtml(e.message) + '</div>';
+        } finally {
+          document.getElementById('batch-loading').classList.remove('show');
+        }
+      }
+
+      // Allow Enter key for single URL
+      document.getElementById('single-url-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') auditSingleURL();
+      });
+    </script>
+  </body>
+</html>

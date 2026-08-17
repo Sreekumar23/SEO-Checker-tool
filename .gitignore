@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Output files (generated at runtime)
+footer_report.csv
+comparison_report.csv
+out.csv
+
+# Debug/test scripts
+debug_*.py
+test_*.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
