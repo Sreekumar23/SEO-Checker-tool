@@ -41,22 +41,27 @@ def audit_single():
 
 @app.route("/api/audit-batch", methods=["POST"])
 def audit_batch():
-    urls_text = request.json.get("urls", "")
-    audit_type = request.json.get("audit_type", "both")
-    urls = [line.strip() for line in urls_text.splitlines() if line.strip()]
-    if not urls:
-        return jsonify({"error": "Please enter at least one URL."}), 400
+    try:
+        urls_text = request.json.get("urls", "")
+        audit_type = request.json.get("audit_type", "both")
+        urls = [line.strip() for line in urls_text.splitlines() if line.strip()]
+        if not urls:
+            return jsonify({"error": "Please enter at least one URL."}), 400
 
-    URLS_PATH.write_text("\n".join(urls) + "\n", encoding="utf-8")
-    audit_runner = FooterAudit(str(URLS_PATH), str(OUTPUT_PATH))
-    rows = audit_runner.run(audit_type=audit_type)
-    if rows:
-        return jsonify({"status": "success", "results": rows})
-    return jsonify({"error": "No results."}), 500
+        URLS_PATH.write_text("\n".join(urls) + "\n", encoding="utf-8")
+        audit_runner = FooterAudit(str(URLS_PATH), str(OUTPUT_PATH))
+        rows = audit_runner.run(audit_type=audit_type)
+        if rows:
+            return jsonify({"status": "success", "results": rows})
+        return jsonify({"error": "No results."}), 500
+    except Exception as e:
+        app.logger.error("audit_batch failed: %s\n%s", e, traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/audit-comparison", methods=["POST"])
 def audit_comparison():
+  try:
     urls_text = request.json.get("urls", "")
     urls = [line.strip() for line in urls_text.splitlines() if line.strip()]
     if not urls:
@@ -127,6 +132,9 @@ def audit_comparison():
     audit_type = request.json.get("audit_type", "both")
     audit_runner.write_report(results, audit_type=audit_type)
     return jsonify({"status": "success", "results": results, "comparison": comparison})
+  except Exception as e:
+    app.logger.error("audit_comparison failed: %s\n%s", e, traceback.format_exc())
+    return jsonify({"error": str(e)}), 500
 
 
 @app.route("/download")

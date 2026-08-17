@@ -6,7 +6,7 @@ import unicodedata
 from html.parser import HTMLParser
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote, urlparse, urlunparse
 from pathlib import Path
 
 # ADAudit Plus footer tabs
@@ -895,7 +895,11 @@ class FooterAudit:
                 return html, raw_tabs, lhs_data, rhs_data, cta_data
         except Exception:
             try:
-                req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                # urllib requires ASCII-only URLs — percent-encode any non-ASCII
+                # characters (e.g. curly apostrophes in French/localized URLs).
+                _p = urlparse(url)
+                _ascii_url = urlunparse(_p._replace(path=quote(_p.path, safe='/:@!$&\'()*+,;=')))
+                req = Request(_ascii_url, headers={"User-Agent": "Mozilla/5.0"})
                 with urlopen(req, timeout=20) as resp:
                     return resp.read().decode("utf-8", errors="ignore"), [], self._EMPTY_LHS, self._EMPTY_RHS, self._EMPTY_CTA
             except (HTTPError, URLError) as exc:
