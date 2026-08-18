@@ -785,16 +785,29 @@ class FooterAudit:
                             return { detected: links > 0, link_count: links, sections: sections };
                         }
                         // Pattern B: KB/help pages — find relPrd/releated-nav in the right column.
-                        // Exclude elements inside lhsTree OR its parent container (div.lhs--tree--new
-                        // or similar), since on some pages ul.relPrd is a sibling of ul#lhsTree
-                        // but still inside the LHS container, not the right column.
+                        // Exclusions:
+                        //   - inside lhsTree or its parent (LHS sidebar elements)
+                        //   - inside any ancestor whose class contains "foot" (footer sections
+                        //     on case-study pages use div.cusss-foot-com with ul.releated-nav)
                         const lhsTree = document.querySelector('ul#lhsTree');
                         const lhsParent = lhsTree ? lhsTree.parentElement : null;
+                        function inFooter(el) {
+                            let node = el.parentElement;
+                            while (node && node !== document.body) {
+                                if (node.tagName === 'FOOTER') return true;
+                                for (const c of node.classList) {
+                                    if (c.toLowerCase().includes('foot')) return true;
+                                }
+                                node = node.parentElement;
+                            }
+                            return false;
+                        }
                         const rhsRelPrd = Array.from(
                             document.querySelectorAll('ul.relPrd, ul.releated-nav')
                         ).find(el => {
                             if (lhsTree && lhsTree.contains(el)) return false;
                             if (lhsParent && lhsParent.contains(el)) return false;
+                            if (inFooter(el)) return false;
                             return true;
                         });
                         if (rhsRelPrd) {
