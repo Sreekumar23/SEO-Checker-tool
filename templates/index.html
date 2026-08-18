@@ -923,7 +923,7 @@
           if (showAdaudit) {
             const aa = row.product === 'ADAudit Plus';
             html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /active.?directory/)) + '</td>';
-            html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /file.?server|servidor.?de.?archivos|servidores.?de.?archivos|serveur.?de.?fichiers|dateiserver|servidor.?de.?arquivos|server.?di.?file|bestandsserver|dosya.?sunucusu|serwer.?plikow|serwery.?plikow/)) + '</td>';
+            html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /file.?server|servidor.?de.?archivos|servidores.?de.?archivos|serveur.?de.?fichiers|dateiserver|servidor.?de.?arquivos|servidores.?de.?arquivos|server.?di.?file|bestandsserver|dosya.?sunucusu|serwer.?plikow|serwery.?plikow/)) + '</td>';
             html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /windows.?server|servidores.?windows|servidor.?windows/)) + '</td>';
             html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /workstation|estacion.?de.?trabajo|station.?de.?travail|arbeitsstation|arbeitsplatz|estacao.?de.?trabalho|postazione|werkstation|is.?istasyonu|stacja.?robocza|stacje.?robocze/)) + '</td>';
             html += '<td style="background:#f5faff;">' + bool(aa && tabHas(nt, /compliance|cumplimiento|conformite|einhaltung|conformidade|conformita|naleving|uyumluluk|zgodnosc/)) + '</td>';
