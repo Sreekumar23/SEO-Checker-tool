@@ -866,9 +866,18 @@ class FooterAudit:
                                 return s.visibility !== 'hidden' && s.display !== 'none' && parseFloat(s.opacity) > 0.1;
                             });
                         if (floatBtns.length > 0) {
-                            const labels = floatBtns
-                                .map(b => b.getAttribute('data-value') || b.innerText.trim())
-                                .filter(Boolean);
+                            // Derive label from href (language-neutral) so French/localized pages
+                            // show consistent names instead of locale-specific data-value strings.
+                            function ctaLabel(b) {
+                                const pg = (b.getAttribute('href') || '').split('?')[0].split('/').pop().toLowerCase();
+                                if (pg.includes('demo')) return 'Demo';
+                                if (pg.includes('quote') || pg.includes('pricing')) return 'Get Quote';
+                                if (pg.includes('trial') || pg.includes('free-trial')) return 'Free Trial';
+                                if (pg.includes('download')) return 'Download';
+                                if (pg.includes('callback')) return 'Callback';
+                                return b.innerText.trim() || b.getAttribute('data-value') || pg;
+                            }
+                            const labels = floatBtns.map(ctaLabel).filter(Boolean);
                             return {
                                 detected: true,
                                 pattern: 'floating-buttons',
