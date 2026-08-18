@@ -659,6 +659,8 @@ class FooterAudit:
                             if (sib && sib.children.length > 0) return true;
                             if (document.querySelector('ul#lhsElement')) return true;
                             if (document.querySelector('ul#vMenu')) return true;
+                            const helpPane = document.querySelector('div.help_left_pane');
+                            if (helpPane && helpPane.querySelector('ul li a')) return true;
                             return false;
                         }""",
                         timeout=3000
@@ -766,6 +768,14 @@ class FooterAudit:
                         // Pattern C: ADManager Plus help pages (ul#vMenu must be rendered)
                         const vMenu = document.querySelector('ul#vMenu');
                         if (vMenu) { const r = helpPageLhs(vMenu); if (r) return r; }
+
+                        // Pattern D: Cloud Log Management and similar help pages using
+                        // div.help_left_pane (custom scrollbar sidebar — mCustomScrollbar).
+                        const helpPane = document.querySelector('div.help_left_pane');
+                        if (helpPane) {
+                            const ul = helpPane.querySelector('ul');
+                            if (ul) { const r = helpPageLhs(ul); if (r) return r; }
+                        }
 
                         return {detected: false, link_count: 0, sections: [], related_products: false};
                     }
