@@ -784,11 +784,19 @@ class FooterAudit:
                                 .map(el => el.innerText.trim()).filter(Boolean);
                             return { detected: links > 0, link_count: links, sections: sections };
                         }
-                        // Pattern B: KB/help pages — find relPrd/releated-nav NOT inside lhsTree
+                        // Pattern B: KB/help pages — find relPrd/releated-nav in the right column.
+                        // Exclude elements inside lhsTree OR its parent container (div.lhs--tree--new
+                        // or similar), since on some pages ul.relPrd is a sibling of ul#lhsTree
+                        // but still inside the LHS container, not the right column.
                         const lhsTree = document.querySelector('ul#lhsTree');
+                        const lhsParent = lhsTree ? lhsTree.parentElement : null;
                         const rhsRelPrd = Array.from(
                             document.querySelectorAll('ul.relPrd, ul.releated-nav')
-                        ).find(el => !lhsTree || !lhsTree.contains(el));
+                        ).find(el => {
+                            if (lhsTree && lhsTree.contains(el)) return false;
+                            if (lhsParent && lhsParent.contains(el)) return false;
+                            return true;
+                        });
                         if (rhsRelPrd) {
                             const links = rhsRelPrd.querySelectorAll('a').length;
                             // Heading is in span.hea inside ul.relPrd
@@ -885,6 +893,24 @@ class FooterAudit:
                                 cta_text: labels.join(' | '),
                                 form_present: popup !== null,
                             };
+                        }
+
+                        // Pattern 4: fixed RHS pricing/quote panel (div#adRhsLnk)
+                        const adRhs = document.querySelector('div#adRhsLnk');
+                        if (adRhs) {
+                            const s = window.getComputedStyle(adRhs);
+                            if (s.display !== 'none' && s.visibility !== 'hidden') {
+                                const labels = Array.from(adRhs.querySelectorAll('a'))
+                                    .map(a => a.innerText.trim()).filter(Boolean);
+                                return {
+                                    detected: true,
+                                    pattern: 'rhs-ad-panel',
+                                    heading: '',
+                                    bullets: [],
+                                    cta_text: labels.join(' | '),
+                                    form_present: false,
+                                };
+                            }
                         }
 
                         return empty;
