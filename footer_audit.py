@@ -1444,9 +1444,20 @@ def generate_comparison_excel(rows):
         cell.font = hdr_fonts[c]
         cell.alignment = Alignment(vertical='top')
 
+    # Columns that carry actual error info — never overridden with "Unable to find"
+    _EN_META    = {'english_url', 'already_english', 'en_load_error', 'en_error_msg'}
+    _LOCAL_META = {'local_url', 'language', 'product', 'local_load_error', 'local_error_msg'}
+
     for ri, row in enumerate(rows, 2):
+        en_failed    = bool(row.get('en_load_error'))
+        local_failed = bool(row.get('local_load_error'))
         for ci, (fname, c) in enumerate(zip(fieldnames, categories), 1):
-            val = _fmt(row.get(fname, ''))
+            if en_failed and fname.startswith('en_') and fname not in _EN_META:
+                val = 'Unable to find'
+            elif local_failed and fname.startswith('local_') and fname not in _LOCAL_META:
+                val = 'Unable to find'
+            else:
+                val = _fmt(row.get(fname, ''))
             cell = ws.cell(row=ri, column=ci, value=val)
             if cell_fills[c]:
                 cell.fill = cell_fills[c]
