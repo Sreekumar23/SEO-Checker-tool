@@ -714,6 +714,13 @@ class FooterAudit:
                         // Pattern A: product page LHS
                         const lhsTree = document.querySelector('ul#lhsTree');
                         if (lhsTree) {
+                            // Skip if the LHS container is hidden — get-quote/landing pages
+                            // keep ul#lhsTree in the DOM but hide the parent div.lhs-tree
+                            // via display:none so the sidebar is not visible on those pages.
+                            const _par = lhsTree.parentElement;
+                            if (_par && window.getComputedStyle(_par).display === 'none') {
+                                return {detected: false, link_count: 0, sections: [], related_products: false};
+                            }
                             const navLinks = Array.from(lhsTree.querySelectorAll('a'))
                                 .filter(a => !a.closest('ul.relPrd, ul.releated-nav'));
                             const sections = Array.from(lhsTree.querySelectorAll('span.ifTree'))
