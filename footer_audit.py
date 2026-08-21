@@ -746,10 +746,17 @@ class FooterAudit:
                             };
                         }
                         // Helper: extract sections + relPro for help-page nav roots.
-                        // Returns null if the element is zero-sized (hidden/off-screen template).
+                        // Returns null if the element or its parent is hidden via CSS.
+                        // Uses getComputedStyle (not getBoundingClientRect — that returns
+                        // 0x0 in headless Chromium even for fully visible elements).
                         function helpPageLhs(root) {
-                            const rect = root.getBoundingClientRect();
-                            if (rect.width === 0 && rect.height === 0) return null;
+                            const s = window.getComputedStyle(root);
+                            if (s.display === 'none' || s.visibility === 'hidden') return null;
+                            const par = root.parentElement;
+                            if (par) {
+                                const ps = window.getComputedStyle(par);
+                                if (ps.display === 'none' || ps.visibility === 'hidden') return null;
+                            }
                             const navLinks = Array.from(root.querySelectorAll('a'));
                             const sections = Array.from(root.children)
                                 .filter(li => li.tagName === 'LI' && li.querySelector('a'))
