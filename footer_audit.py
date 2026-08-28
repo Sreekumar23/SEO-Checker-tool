@@ -606,7 +606,15 @@ class FooterAudit:
             from playwright.sync_api import sync_playwright
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
-                page = browser.new_page()
+                # 1920×1080 (Full HD) matches the most common desktop resolution.
+                # Short KB article pages fit in one screen at this width, so
+                # window.scrollTo(0,600) leaves scrollY=0, the prd-ela.js scroll
+                # handler (scrollY>300) never fires, and a.floading-btn buttons
+                # never receive activeBtn — they stay visibility:hidden and are
+                # correctly excluded by the CTA filter. At narrower viewports
+                # (1280×720 or 1366×768) these same pages were tall enough to
+                # scroll, causing false-positive CTA detections.
+                page = browser.new_page(viewport={"width": 1920, "height": 1080})
                 page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 # Note any redirect so callers can surface it; continue analysing the
                 # destination page rather than erroring (e.g. locale KB pages that redirect
@@ -655,12 +663,15 @@ class FooterAudit:
                         """() => {
                             const lhsTree = document.querySelector('ul#lhsTree');
                             if (lhsTree && lhsTree.querySelector('ul.relPrd, ul.releated-nav')) return true;
+                            if (lhsTree && lhsTree.querySelector('li a')) return true;
                             const sib = document.querySelector('ul#lhsRelPrd');
                             if (sib && sib.children.length > 0) return true;
                             if (document.querySelector('ul#lhsElement')) return true;
                             if (document.querySelector('ul#vMenu')) return true;
                             const helpPane = document.querySelector('div.help_left_pane');
                             if (helpPane && helpPane.querySelector('ul li a')) return true;
+                            const shellRhs = document.querySelector('div.shell-tab-rhs ul.rel-prod');
+                            if (shellRhs && shellRhs.querySelector('li a')) return true;
                             return false;
                         }""",
                         timeout=3000
@@ -695,6 +706,33 @@ class FooterAudit:
                             const tabs = Array.from(highHea.querySelectorAll('li'))
                                 .map(el => el.innerText.trim()).filter(Boolean);
                             if (tabs.length) return tabs;
+                        }
+                        // Pattern 5: German/localized product pages — product tab nav is
+                        // rendered as ul.nav.header-nav.productmenu in the page header
+                        // (no separate .pageTab or .fea-nav footer section).
+                        // Guards:
+                        //  1. Skip thank-you/conversion pages (productmenu exists in
+                        //     header template but those pages have no real product tabs).
+                        //  2. Skip article/KB/section pages — productmenu is present on
+                        //     every page of the template but deep sub-paths like
+                        //     /de/eventlog/cyber-security/dc-shadow-attack.html are content
+                        //     articles, not direct product tab pages.
+                        //     Heuristic: locale paths (/de/…, /fr/…, etc.) have ≤3 segments
+                        //     for direct product pages (/locale/product/page.html); more
+                        //     segments means a sub-section article page.
+                        const _path = window.location.pathname.toLowerCase();
+                        const _isThanksPage = /thank/.test(_path);
+                        const _segs = _path.split('/').filter(Boolean);
+                        const _isLocale = _segs.length > 0 && /^[a-z]{2,5}$/.test(_segs[0]);
+                        const _maxDepth = _isLocale ? 3 : 2;
+                        const _isDeepPage = _segs.length > _maxDepth;
+                        if (!_isThanksPage && !_isDeepPage) {
+                            const productMenu = document.querySelector('ul.nav.header-nav.productmenu');
+                            if (productMenu) {
+                                const tabs = Array.from(productMenu.querySelectorAll('li a'))
+                                    .map(el => el.innerText.trim()).filter(Boolean);
+                                if (tabs.length >= 2) return tabs;
+                            }
                         }
                         return [];
                     }
@@ -845,6 +883,27 @@ class FooterAudit:
                                 sections: heading ? [heading] : [],
                             };
                         }
+                        // Pattern C: KB/doc pages using div.shell-tab-rhs layout with
+                        // ul.rel-prod (JS-populated). Mobile duplicate lives in
+                        // section.mob-links — excluded by requiring div.shell-tab-rhs ancestor.
+                        const shellRhs = document.querySelector('div.shell-tab-rhs');
+                        if (shellRhs) {
+                            const relProd = shellRhs.querySelector('ul.rel-prod');
+                            if (relProd) {
+                                const links = relProd.querySelectorAll('a').length;
+                                const relLinksDiv = relProd.closest('.related-links');
+                                const headingEl = relLinksDiv
+                                    ? relLinksDiv.querySelector('div') : null;
+                                const heading = headingEl ? headingEl.innerText.trim() : '';
+                                if (links > 0) {
+                                    return {
+                                        detected: true,
+                                        link_count: links,
+                                        sections: heading ? [heading] : [],
+                                    };
+                                }
+                            }
+                        }
                         return { detected: false, link_count: 0, sections: [] };
                     }
                 """) or self._EMPTY_RHS
@@ -926,19 +985,32 @@ class FooterAudit:
                         }
 
                         // Pattern 3: sem/lp sliding button panel (div.sliding-buttons)
+                        // ManageEngine's global JS injects this element on many pages;
+                        // must check visibility so hidden instances (e.g. on KB articles)
+                        // don't produce false positives.
                         const slidingPanel = document.querySelector('div.sliding-buttons');
                         if (slidingPanel) {
-                            const links = Array.from(slidingPanel.querySelectorAll('a'));
-                            const labels = links.map(a => a.innerText.trim()).filter(Boolean);
-                            const popup = document.querySelector('div.form-popup');
-                            return {
-                                detected: true,
-                                pattern: 'sliding-buttons',
-                                heading: '',
-                                bullets: [],
-                                cta_text: labels.join(' | '),
-                                form_present: popup !== null,
-                            };
+                            const sp = window.getComputedStyle(slidingPanel);
+                            if (sp.display !== 'none' && sp.visibility !== 'hidden') {
+                                const links = Array.from(slidingPanel.querySelectorAll('a'))
+                                    .filter(a => {
+                                        const as = window.getComputedStyle(a);
+                                        return as.display !== 'none' && as.visibility !== 'hidden'
+                                            && parseFloat(as.opacity) > 0.1;
+                                    });
+                                if (links.length > 0) {
+                                    const labels = links.map(a => a.innerText.trim()).filter(Boolean);
+                                    const popup = document.querySelector('div.form-popup');
+                                    return {
+                                        detected: true,
+                                        pattern: 'sliding-buttons',
+                                        heading: '',
+                                        bullets: [],
+                                        cta_text: labels.join(' | '),
+                                        form_present: popup !== null,
+                                    };
+                                }
+                            }
                         }
 
                         // Pattern 4: fixed RHS pricing/quote panel (div#adRhsLnk)

@@ -550,48 +550,48 @@
             secRow += `<td colspan="${totalDataCols}" style="background:#fff8e1;font-size:10px;color:#e65100;padding-left:8px;">
               ${escapeHtml(localErrMsg)}
             </td>`;
-          } else if (enFailed) {
-            summaryRow += enErrorCell;
-            const secCols = totalDataCols;
-            secRow += `<td colspan="${secCols}" style="background:#fff0f0;font-size:10px;color:#c0392b;padding-left:8px;">
-              ${escapeHtml(enErrMsg)}
-            </td>`;
           } else {
+            const EN_UNAVAIL_CELL = `<td style="font-size:11px;background:#fff0f0;color:#c0392b;font-weight:600;font-style:italic;">Unable to find</td>`;
+            const EN_UNAVAIL_SEC  = `<td class="cmp-sec" style="background:#fff8f8;color:#c0392b;font-style:italic;">Unable to find English page</td>`;
             if (showLhs) {
               const lLocal = (r.local_lhs_detected ? 'Available — ' : 'Not available — ') + (r.local_lhs_links||0) + ' links';
               const lEn    = (r.en_lhs_detected    ? 'Available — ' : 'Not available — ') + (r.en_lhs_links   ||0) + ' links';
-              const match  = r.local_lhs_detected === r.en_lhs_detected && r.local_lhs_links === r.en_lhs_links;
+              const match  = !enFailed && r.local_lhs_detected === r.en_lhs_detected && r.local_lhs_links === r.en_lhs_links;
               const cls    = match ? 'cmp-match' : '';
-              summaryRow += `<td class="col-lhs ${cls}" style="font-size:11px;">${escapeHtml(lLocal)}</td>
-                             <td class="col-lhs ${cls}" style="font-size:11px;">${escapeHtml(lEn)}</td>`;
+              summaryRow += `<td class="col-lhs ${cls}" style="font-size:11px;">${escapeHtml(lLocal)}</td>`;
+              summaryRow += enFailed ? EN_UNAVAIL_CELL : `<td class="col-lhs ${cls}" style="font-size:11px;">${escapeHtml(lEn)}</td>`;
               const lSecL = r.local_lhs_sections ? r.local_lhs_sections.split(' | ') : [];
               const lSecE = r.en_lhs_sections    ? r.en_lhs_sections.split(' | ')    : [];
-              secRow += `<td class="cmp-sec col-lhs">${lSecL.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>
-                         <td class="cmp-sec col-lhs">${lSecE.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
+              secRow += `<td class="cmp-sec col-lhs">${lSecL.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
+              secRow += enFailed ? EN_UNAVAIL_SEC : `<td class="cmp-sec col-lhs">${lSecE.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
             }
             if (showRhs) {
               const rLocal = (r.local_rhs_detected ? 'Available — ' : 'Not available — ') + (r.local_rhs_links||0) + ' links';
               const rEn    = (r.en_rhs_detected    ? 'Available — ' : 'Not available — ') + (r.en_rhs_links   ||0) + ' links';
-              const match  = r.local_rhs_detected === r.en_rhs_detected && r.local_rhs_links === r.en_rhs_links;
+              const match  = !enFailed && r.local_rhs_detected === r.en_rhs_detected && r.local_rhs_links === r.en_rhs_links;
               const cls    = match ? 'cmp-match' : '';
-              summaryRow += `<td class="col-rhs ${cls}" style="font-size:11px;">${escapeHtml(rLocal)}</td>
-                             <td class="col-rhs ${cls}" style="font-size:11px;">${escapeHtml(rEn)}</td>`;
+              summaryRow += `<td class="col-rhs ${cls}" style="font-size:11px;">${escapeHtml(rLocal)}</td>`;
+              summaryRow += enFailed ? EN_UNAVAIL_CELL : `<td class="col-rhs ${cls}" style="font-size:11px;">${escapeHtml(rEn)}</td>`;
               const rSecL = r.local_rhs_sections ? r.local_rhs_sections.split(' | ') : [];
               const rSecE = r.en_rhs_sections    ? r.en_rhs_sections.split(' | ')    : [];
-              secRow += `<td class="cmp-sec col-rhs">${rSecL.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>
-                         <td class="cmp-sec col-rhs">${rSecE.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
+              secRow += `<td class="cmp-sec col-rhs">${rSecL.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
+              secRow += enFailed ? EN_UNAVAIL_SEC : `<td class="cmp-sec col-rhs">${rSecE.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
             }
             if (showFooter) {
               const ftL  = r.local_footer_detected ? 'Available' : 'Not available';
               const ftE  = r.en_footer_detected    ? 'Available' : 'Not available';
-              const match = r.local_footer_detected === r.en_footer_detected;
+              const match = !enFailed && r.local_footer_detected === r.en_footer_detected;
               const cls  = match ? 'cmp-match' : '';
-              summaryRow += `<td class="col-ftr ${cls}" style="font-size:11px;">${ftL}</td>
-                             <td class="col-ftr ${cls}" style="font-size:11px;">${ftE}</td>`;
-              secRow += `<td class="cmp-sec col-ftr" colspan="2" style="font-size:10px;">
-                           <b>Local:</b> ${escapeHtml(r.local_footer_tabs||'—')}<br>
-                           <b>EN:</b> ${escapeHtml(r.en_footer_tabs||'—')}
-                         </td>`;
+              summaryRow += `<td class="col-ftr ${cls}" style="font-size:11px;">${ftL}</td>`;
+              summaryRow += enFailed ? EN_UNAVAIL_CELL : `<td class="col-ftr ${cls}" style="font-size:11px;">${ftE}</td>`;
+              if (enFailed) {
+                secRow += `<td class="cmp-sec col-ftr" style="font-size:10px;"><b>Local:</b> ${escapeHtml(r.local_footer_tabs||'—')}</td>${EN_UNAVAIL_SEC}`;
+              } else {
+                secRow += `<td class="cmp-sec col-ftr" colspan="2" style="font-size:10px;">
+                             <b>Local:</b> ${escapeHtml(r.local_footer_tabs||'—')}<br>
+                             <b>EN:</b> ${escapeHtml(r.en_footer_tabs||'—')}
+                           </td>`;
+              }
             }
             if (showCta) {
               const ctaPatternBadge = p => {
@@ -605,15 +605,19 @@
               };
               const cLocal = r.local_cta_detected ? 'Available — ' + escapeHtml(r.local_cta_text||'') : 'Not available';
               const cEn    = r.en_cta_detected    ? 'Available — ' + escapeHtml(r.en_cta_text   ||'') : 'Not available';
-              const match  = r.local_cta_detected === r.en_cta_detected;
+              const match  = !enFailed && r.local_cta_detected === r.en_cta_detected;
               const cls    = match ? 'cmp-match' : '';
               summaryRow += `<td class="col-cta ${cls}" style="font-size:11px;">${cLocal}</td>
-                             <td class="col-cta" style="text-align:center;">${ctaPatternBadge(r.local_cta_pattern)}</td>
-                             <td class="col-cta ${cls}" style="font-size:11px;">${cEn}</td>`;
-              secRow += `<td class="cmp-sec col-cta" colspan="3" style="font-size:10px;">
-                           <b>Local pattern:</b> ${escapeHtml(r.local_cta_pattern||'—')} &nbsp;|&nbsp;
-                           <b>EN pattern:</b> ${escapeHtml(r.en_cta_pattern||'—')}
-                         </td>`;
+                             <td class="col-cta" style="text-align:center;">${ctaPatternBadge(r.local_cta_pattern)}</td>`;
+              summaryRow += enFailed ? EN_UNAVAIL_CELL : `<td class="col-cta ${cls}" style="font-size:11px;">${cEn}</td>`;
+              if (enFailed) {
+                secRow += `<td class="cmp-sec col-cta" colspan="2" style="font-size:10px;"><b>Local pattern:</b> ${escapeHtml(r.local_cta_pattern||'—')}</td>${EN_UNAVAIL_SEC}`;
+              } else {
+                secRow += `<td class="cmp-sec col-cta" colspan="3" style="font-size:10px;">
+                             <b>Local pattern:</b> ${escapeHtml(r.local_cta_pattern||'—')} &nbsp;|&nbsp;
+                             <b>EN pattern:</b> ${escapeHtml(r.en_cta_pattern||'—')}
+                           </td>`;
+              }
             }
           }
 
