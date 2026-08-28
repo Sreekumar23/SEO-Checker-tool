@@ -755,8 +755,15 @@ class FooterAudit:
                             // Skip if the LHS container is hidden — get-quote/landing pages
                             // keep ul#lhsTree in the DOM but hide the parent div.lhs-tree
                             // via display:none so the sidebar is not visible on those pages.
-                            const _par = lhsTree.parentElement;
-                            if (_par && window.getComputedStyle(_par).display === 'none') {
+                            let _anc = lhsTree.parentElement;
+                            let _hiddenByDisplay = false;
+                            while (_anc && _anc !== document.body) {
+                                if (window.getComputedStyle(_anc).display === 'none') {
+                                    _hiddenByDisplay = true; break;
+                                }
+                                _anc = _anc.parentElement;
+                            }
+                            if (_hiddenByDisplay) {
                                 return {detected: false, link_count: 0, sections: [], related_products: false};
                             }
                             const navLinks = Array.from(lhsTree.querySelectorAll('a'))
