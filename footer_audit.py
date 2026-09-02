@@ -672,6 +672,7 @@ class FooterAudit:
                             if (helpPane && helpPane.querySelector('ul li a')) return true;
                             const shellRhs = document.querySelector('div.shell-tab-rhs ul.rel-prod');
                             if (shellRhs && shellRhs.querySelector('li a')) return true;
+                            if (document.querySelector('aside.page-lhs nav.lhs-section a')) return true;
                             return false;
                         }""",
                         timeout=3000
@@ -834,6 +835,29 @@ class FooterAudit:
                         if (helpPane) {
                             const ul = helpPane.querySelector('ul');
                             if (ul) { const r = helpPageLhs(ul); if (r) return r; }
+                        }
+
+                        // Pattern E: ADSelfService Plus (SSP) admin-guide pages using
+                        // aside.page-lhs with nav.lhs-section holding the menu links.
+                        const pageLhs = document.querySelector('aside.page-lhs');
+                        if (pageLhs) {
+                            const ps = window.getComputedStyle(pageLhs);
+                            if (ps.display !== 'none' && ps.visibility !== 'hidden') {
+                                const lhsNav = pageLhs.querySelector('nav.lhs-section');
+                                const navLinks = Array.from(
+                                    (lhsNav || pageLhs).querySelectorAll('a')
+                                ).filter(a => {
+                                    const as = window.getComputedStyle(a);
+                                    return as.display !== 'none' && as.visibility !== 'hidden';
+                                });
+                                if (navLinks.length > 0) {
+                                    const sections = Array.from(
+                                        (lhsNav || pageLhs).querySelectorAll('ul.first-level-menu > li > a')
+                                    ).map(a => a.innerText.trim()).filter(Boolean);
+                                    return { detected: true, link_count: navLinks.length,
+                                             sections: sections, related_products: false };
+                                }
+                            }
                         }
 
                         return {detected: false, link_count: 0, sections: [], related_products: false};
