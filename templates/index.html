@@ -1029,7 +1029,10 @@
             document.getElementById('single-message').innerHTML = '<div class="error">✗ ' + escapeHtml(data.error) + '</div>';
           }
         } catch (e) {
-          document.getElementById('single-message').innerHTML = '<div class="error">✗ Error: ' + escapeHtml(e.message) + '</div>';
+          const msg = e.message === 'Failed to fetch'
+            ? 'Connection to the server was lost (the computer may have gone to sleep or the server stopped). Please restart the server and try again.'
+            : e.message;
+          document.getElementById('single-message').innerHTML = '<div class="error">✗ ' + escapeHtml(msg) + '</div>';
         } finally {
           document.getElementById('single-loading').classList.remove('show');
         }
@@ -1061,7 +1064,10 @@
             document.getElementById('batch-message').innerHTML = '<div class="error">✗ ' + escapeHtml(data.error) + '</div>';
           }
         } catch (e) {
-          document.getElementById('batch-message').innerHTML = '<div class="error">✗ Error: ' + escapeHtml(e.message) + '</div>';
+          const msg = e.message === 'Failed to fetch'
+            ? 'Connection to the server was lost (the computer may have gone to sleep or the server stopped). Please restart the server and try again.'
+            : e.message;
+          document.getElementById('batch-message').innerHTML = '<div class="error">✗ ' + escapeHtml(msg) + '</div>';
         } finally {
           document.getElementById('batch-loading').classList.remove('show');
         }
