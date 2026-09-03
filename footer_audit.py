@@ -646,13 +646,19 @@ class FooterAudit:
                     browser.close()
                     raise URLError("page not found — ManageEngine empty page")
                 # Remove ALL CSS-hidden product navs (display:none on self or any ancestor).
+                # If any of them existed but was hidden, record that on the document so
+                # Pattern 5 (productmenu proxy) knows not to fire — the page is part of a
+                # product site but the footer tab nav simply isn't showing on this sub-page.
                 page.evaluate("""
                     () => {
+                        let hadHidden = false;
                         ['.fea-nav', '.footer-new', '.pageTab'].forEach(sel => {
                             document.querySelectorAll(sel).forEach(el => {
-                                if (el.offsetParent === null) el.remove();
+                                if (el.offsetParent === null) { hadHidden = true; el.remove(); }
                             });
                         });
+                        if (hadHidden)
+                            document.documentElement.setAttribute('data-had-hidden-footer', '1');
                     }
                 """)
                 # Wait for LHS related-products block to be injected by JS.
@@ -727,7 +733,12 @@ class FooterAudit:
                         const _isLocale = _segs.length > 0 && /^[a-z]{2,5}$/.test(_segs[0]);
                         const _maxDepth = _isLocale ? 3 : 2;
                         const _isDeepPage = _segs.length > _maxDepth;
-                        if (!_isThanksPage && !_isDeepPage) {
+                        // Skip productmenu proxy if a hidden footer-template element was
+                        // found and removed above — the page belongs to a product site but
+                        // this sub-page doesn't actually display the footer tab nav.
+                        const _hadHiddenFooter =
+                            document.documentElement.getAttribute('data-had-hidden-footer') === '1';
+                        if (!_isThanksPage && !_isDeepPage && !_hadHiddenFooter) {
                             const productMenu = document.querySelector('ul.nav.header-nav.productmenu');
                             if (productMenu) {
                                 const tabs = Array.from(productMenu.querySelectorAll('li a'))
