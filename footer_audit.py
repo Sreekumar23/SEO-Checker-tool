@@ -1008,11 +1008,17 @@ class FooterAudit:
                         }
 
                         // Pattern 2: floating fixed buttons (a.floading-btn)
-                        // Scroll-triggered buttons become visible after ~400px scroll.
-                        // The page was already scrolled to 600px before this evaluate runs, so
-                        // permanently-hidden buttons (ebook/landing pages) remain visibility:hidden
-                        // and are filtered out; real CTA buttons are visible (or opacity>0) by now.
-                        const floatBtns = Array.from(document.querySelectorAll('a.floading-btn'))
+                        // prd-ela.js injects these on ALL pages of a product site and makes
+                        // them visible only after scrollY > 300. Only count them on shallow
+                        // product pages (locale path ≤ 3 segments; e.g. /de/product/download.html).
+                        // Deep sub-pages like /de/product/kb-section/article.html are content
+                        // reference pages where these buttons activate from scroll but are not
+                        // an intentional CTA placement.
+                        const _fPath = window.location.pathname.toLowerCase();
+                        const _fSegs = _fPath.split('/').filter(Boolean);
+                        const _fIsLocale = _fSegs.length > 0 && /^[a-z]{2,5}$/.test(_fSegs[0]);
+                        const _fIsDeep = _fIsLocale ? _fSegs.length > 3 : _fSegs.length > 2;
+                        const floatBtns = _fIsDeep ? [] : Array.from(document.querySelectorAll('a.floading-btn'))
                             .filter(b => {
                                 const s = window.getComputedStyle(b);
                                 return s.visibility !== 'hidden' && s.display !== 'none' && parseFloat(s.opacity) > 0.1;
