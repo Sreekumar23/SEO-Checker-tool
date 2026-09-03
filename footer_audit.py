@@ -809,6 +809,7 @@ class FooterAudit:
                                 .map(li => li.querySelector('a').innerText.trim())
                                 .filter(Boolean);
                             let hasRelated = false;
+                            // Check siblings of root first
                             let sib = root.nextElementSibling;
                             while (sib) {
                                 if (sib.classList.contains('relPro')
@@ -816,6 +817,19 @@ class FooterAudit:
                                     hasRelated = true; break;
                                 }
                                 sib = sib.nextElementSibling;
+                            }
+                            // ul#vMenu may be wrapped in an anonymous div; ul.relPro is
+                            // then a sibling of that wrapper, not of ul#vMenu itself.
+                            if (!hasRelated && root.parentElement
+                                    && root.parentElement !== document.body) {
+                                let parSib = root.parentElement.nextElementSibling;
+                                while (parSib) {
+                                    if (parSib.classList.contains('relPro')
+                                            && parSib.querySelectorAll('a').length > 0) {
+                                        hasRelated = true; break;
+                                    }
+                                    parSib = parSib.nextElementSibling;
+                                }
                             }
                             return { detected: navLinks.length > 0, link_count: navLinks.length,
                                      sections: sections, related_products: hasRelated };
