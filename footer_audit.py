@@ -626,7 +626,7 @@ class FooterAudit:
                 try:
                     page.wait_for_selector(
                         ".fea-nav, .footer-new, .pageTab, div.fea-nav-list, div.highHea",
-                        timeout=15000
+                        timeout=5000
                     )
                 except Exception:
                     pass

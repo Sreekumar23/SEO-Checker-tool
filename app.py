@@ -1,3 +1,4 @@
+import concurrent.futures
 import csv
 import io
 import traceback
@@ -68,18 +69,26 @@ def audit_comparison():
         return jsonify({"error": "Please enter at least one URL."}), 400
 
     audit_runner = FooterAudit(str(URLS_PATH), str(OUTPUT_PATH))
+
+    def _process_pair(url):
+        local = audit_runner.analyze_url(url)
+        canonical = FooterAudit.derive_canonical_url(url)
+        en = audit_runner.analyze_url(canonical) if canonical else local
+        return url, canonical, local, en
+
+    # Run up to 3 URL pairs in parallel (each pair: local fetch then EN fetch).
+    pair_results = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+        futures = {ex.submit(_process_pair, url): url for url in urls}
+        for fut in concurrent.futures.as_completed(futures):
+            url, canonical, local, en = fut.result()
+            pair_results[url] = (canonical, local, en)
+
     results = []
     comparison = []
-
-    for url in urls:
-        local = audit_runner.analyze_url(url)
+    for url in urls:  # preserve original order
+        canonical, local, en = pair_results[url]
         results.append(local)
-
-        canonical = FooterAudit.derive_canonical_url(url)
-        if canonical:
-            en = audit_runner.analyze_url(canonical)
-        else:
-            en = local  # Already English — compare against itself
 
         local_failed = bool(local.get("note", "").startswith("Fetch failed"))
         en_failed = bool(en.get("note", "").startswith("Fetch failed"))
