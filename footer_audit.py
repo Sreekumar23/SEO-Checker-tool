@@ -1009,16 +1009,19 @@ class FooterAudit:
 
                         // Pattern 2: floating fixed buttons (a.floading-btn)
                         // prd-ela.js injects these on ALL pages of a product site and makes
-                        // them visible only after scrollY > 300. Only count them on shallow
-                        // product pages (locale path ≤ 3 segments; e.g. /de/product/download.html).
-                        // Deep sub-pages like /de/product/kb-section/article.html are content
-                        // reference pages where these buttons activate from scroll but are not
-                        // an intentional CTA placement.
+                        // them visible only after scrollY > 300.
+                        // On deep sub-pages (locale path > 3 segments) the buttons fire from
+                        // scroll on any page length, so we only count them when ul#lhsTree is
+                        // present — that element marks the standard product-article template
+                        // where CTAs are intentional (e.g. /de/ad-manager/iga/article.html).
+                        // Reference/listing pages (/de/ad-manager/ad-schema-attributes/...)
+                        // use ul#vMenu / ul#lhsElement and have no intentional CTA placement.
                         const _fPath = window.location.pathname.toLowerCase();
                         const _fSegs = _fPath.split('/').filter(Boolean);
                         const _fIsLocale = _fSegs.length > 0 && /^[a-z]{2,5}$/.test(_fSegs[0]);
                         const _fIsDeep = _fIsLocale ? _fSegs.length > 3 : _fSegs.length > 2;
-                        const floatBtns = _fIsDeep ? [] : Array.from(document.querySelectorAll('a.floading-btn'))
+                        const _fHasLhsTree = !!document.querySelector('ul#lhsTree');
+                        const floatBtns = (_fIsDeep && !_fHasLhsTree) ? [] : Array.from(document.querySelectorAll('a.floading-btn'))
                             .filter(b => {
                                 const s = window.getComputedStyle(b);
                                 return s.visibility !== 'hidden' && s.display !== 'none' && parseFloat(s.opacity) > 0.1;
