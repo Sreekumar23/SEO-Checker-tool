@@ -1021,12 +1021,13 @@ class FooterAudit:
                         const _fIsLocale = _fSegs.length > 0 && /^[a-z]{2,5}$/.test(_fSegs[0]);
                         const _fIsDeep = _fIsLocale ? _fSegs.length > 3 : _fSegs.length > 2;
                         const _fHasLhsTree = !!document.querySelector('ul#lhsTree');
-                        // Reference/listing pages (e.g. /ad-schema-attributes/) have a
-                        // div.contentRgt right-column layout and no ul#lhsTree — skip
-                        // floatBtns there. Article pages (IGA, EventLog cyber-security)
-                        // either have ul#lhsTree OR lack div.contentRgt entirely.
+                        // Reference/listing pages (e.g. /ad-schema-attributes/, /ad-group-attributes/)
+                        // are deep, lack ul#lhsTree, have div.contentRgt, and have NO breadcrumb
+                        // (div.brdcrum). KB/article pages that share the same depth and contentRgt
+                        // layout always have a breadcrumb — that presence is the discriminator.
                         const _fSkipFloat = _fIsDeep && !_fHasLhsTree
-                            && !!document.querySelector('div.contentRgt');
+                            && !!document.querySelector('div.contentRgt')
+                            && !document.querySelector('div.brdcrum');
                         const floatBtns = _fSkipFloat ? [] : Array.from(document.querySelectorAll('a.floading-btn'))
                             .filter(b => {
                                 const s = window.getComputedStyle(b);
