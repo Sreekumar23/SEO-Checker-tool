@@ -1021,7 +1021,13 @@ class FooterAudit:
                         const _fIsLocale = _fSegs.length > 0 && /^[a-z]{2,5}$/.test(_fSegs[0]);
                         const _fIsDeep = _fIsLocale ? _fSegs.length > 3 : _fSegs.length > 2;
                         const _fHasLhsTree = !!document.querySelector('ul#lhsTree');
-                        const floatBtns = (_fIsDeep && !_fHasLhsTree) ? [] : Array.from(document.querySelectorAll('a.floading-btn'))
+                        // Reference/listing pages (e.g. /ad-schema-attributes/) have a
+                        // div.contentRgt right-column layout and no ul#lhsTree — skip
+                        // floatBtns there. Article pages (IGA, EventLog cyber-security)
+                        // either have ul#lhsTree OR lack div.contentRgt entirely.
+                        const _fSkipFloat = _fIsDeep && !_fHasLhsTree
+                            && !!document.querySelector('div.contentRgt');
+                        const floatBtns = _fSkipFloat ? [] : Array.from(document.querySelectorAll('a.floading-btn'))
                             .filter(b => {
                                 const s = window.getComputedStyle(b);
                                 return s.visibility !== 'hidden' && s.display !== 'none' && parseFloat(s.opacity) > 0.1;
