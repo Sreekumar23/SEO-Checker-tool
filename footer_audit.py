@@ -1102,6 +1102,43 @@ class FooterAudit:
                             }
                         }
 
+                        // Pattern 5: embedded contact/demo form (div.ffw-form).
+                        // ManageEngine Form Framework — appears on explicit contact pages
+                        // (need-more-info.html, get-quote.html, demo-form.html) as the
+                        // primary on-page CTA rather than a floating or sliding button.
+                        // On these short pages the floading buttons stay permanently hidden
+                        // (page height < 300px scroll threshold) so we only fire this pattern
+                        // when no floading buttons are currently visible — that guards against
+                        // false positives on product/reference pages where ffw-form is a
+                        // secondary embedded element and floading buttons are already visible.
+                        const ffwForm = document.querySelector('div.ffw-form');
+                        if (ffwForm) {
+                            const fs = window.getComputedStyle(ffwForm);
+                            if (fs.display !== 'none' && fs.visibility !== 'hidden') {
+                                const hasVisibleFloat = Array.from(
+                                    document.querySelectorAll('a.floading-btn')
+                                ).some(b => {
+                                    const s = window.getComputedStyle(b);
+                                    return s.visibility !== 'hidden' && s.display !== 'none'
+                                        && parseFloat(s.opacity) > 0.1;
+                                });
+                                if (!hasVisibleFloat) {
+                                    const submitBtn = ffwForm.querySelector(
+                                        'input.ffw-submit, input[type="submit"], button[type="submit"]');
+                                    if (submitBtn) {
+                                        return {
+                                            detected: true,
+                                            pattern: 'embedded-form',
+                                            heading: '',
+                                            bullets: [],
+                                            cta_text: submitBtn.value || submitBtn.innerText.trim() || 'Submit',
+                                            form_present: true,
+                                        };
+                                    }
+                                }
+                            }
+                        }
+
                         return empty;
                     }
                 """) or self._EMPTY_CTA
