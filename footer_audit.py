@@ -1021,15 +1021,15 @@ class FooterAudit:
                         const _fIsLocale = _fSegs.length > 0 && /^[a-z]{2,5}$/.test(_fSegs[0]);
                         const _fIsDeep = _fIsLocale ? _fSegs.length > 3 : _fSegs.length > 2;
                         const _fHasLhsTree = !!document.querySelector('ul#lhsTree');
-                        // Reference/listing pages (e.g. /ad-schema-attributes/, /ad-group-attributes/)
-                        // are deep, lack ul#lhsTree, have div.contentRgt, no breadcrumb (div.brdcrum),
-                        // and no /kb/ path segment. KB article pages may lack a breadcrumb element
-                        // (product-dependent) but always have "kb" as a URL path segment.
-                        const _fHasKbSeg = _fSegs.some(s => s === 'kb');
+                        // Only suppress floading-btn on ADManager attribute reference pages
+                        // (ad-schema-attributes, ad-group-attributes). These are the sole confirmed
+                        // reference/listing pages that are deep, have div.contentRgt, lack ul#lhsTree,
+                        // and have no intentional CTA. All other deep+contentRgt pages (KB articles,
+                        // how-to guides, product sub-sections) DO carry CTAs and must not be skipped.
+                        const _fIsAdAttrPage = _fSegs.some(s => /^ad-[a-z]+-attributes$/.test(s));
                         const _fSkipFloat = _fIsDeep && !_fHasLhsTree
                             && !!document.querySelector('div.contentRgt')
-                            && !document.querySelector('div.brdcrum')
-                            && !_fHasKbSeg;
+                            && _fIsAdAttrPage;
                         const floatBtns = _fSkipFloat ? [] : Array.from(document.querySelectorAll('a.floading-btn'))
                             .filter(b => {
                                 const s = window.getComputedStyle(b);
