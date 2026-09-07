@@ -1115,7 +1115,9 @@ class FooterAudit:
                         const _ffwMaxScroll =
                             document.documentElement.scrollHeight - window.innerHeight;
                         const ffwForm = document.querySelector('div.ffw-form');
-                        if (ffwForm && _ffwMaxScroll < 300) {
+                        // Also require !_fIsDeep: contact pages are always shallow (≤3 segments).
+                        // Deep help/admin-guide pages can also be short but are not CTA pages.
+                        if (ffwForm && _ffwMaxScroll < 300 && !_fIsDeep) {
                             const fs = window.getComputedStyle(ffwForm);
                             if (fs.display !== 'none' && fs.visibility !== 'hidden') {
                                 const submitBtn = ffwForm.querySelector(
