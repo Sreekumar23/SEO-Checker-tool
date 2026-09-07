@@ -1137,6 +1137,33 @@ class FooterAudit:
                             }
                         }
 
+                        // Pattern 6: quick-connect CTA panel (div.quick-connect-links-wrap).
+                        // Used on English /products/ KB/article pages that do not carry
+                        // a.floading-btn. The panel is a fixed sidebar with Free trial,
+                        // Support, and Get Quote links.
+                        const quickConnect = document.querySelector('div.quick-connect-links-wrap');
+                        if (quickConnect) {
+                            const qs = window.getComputedStyle(quickConnect);
+                            if (qs.display !== 'none' && qs.visibility !== 'hidden') {
+                                const qLinks = Array.from(quickConnect.querySelectorAll('a'))
+                                    .filter(a => {
+                                        const s = window.getComputedStyle(a);
+                                        return s.display !== 'none' && s.visibility !== 'hidden'
+                                            && parseFloat(s.opacity) > 0.1;
+                                    });
+                                if (qLinks.length > 0) {
+                                    return {
+                                        detected: true,
+                                        pattern: 'quick-connect',
+                                        heading: '',
+                                        bullets: [],
+                                        cta_text: qLinks.map(a => a.innerText.trim()).filter(Boolean).join(' | '),
+                                        form_present: false,
+                                    };
+                                }
+                            }
+                        }
+
                         return empty;
                     }
                 """) or self._EMPTY_CTA
