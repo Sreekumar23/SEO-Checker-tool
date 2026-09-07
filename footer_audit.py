@@ -1022,12 +1022,14 @@ class FooterAudit:
                         const _fIsDeep = _fIsLocale ? _fSegs.length > 3 : _fSegs.length > 2;
                         const _fHasLhsTree = !!document.querySelector('ul#lhsTree');
                         // Reference/listing pages (e.g. /ad-schema-attributes/, /ad-group-attributes/)
-                        // are deep, lack ul#lhsTree, have div.contentRgt, and have NO breadcrumb
-                        // (div.brdcrum). KB/article pages that share the same depth and contentRgt
-                        // layout always have a breadcrumb — that presence is the discriminator.
+                        // are deep, lack ul#lhsTree, have div.contentRgt, no breadcrumb (div.brdcrum),
+                        // and no /kb/ path segment. KB article pages may lack a breadcrumb element
+                        // (product-dependent) but always have "kb" as a URL path segment.
+                        const _fHasKbSeg = _fSegs.some(s => s === 'kb');
                         const _fSkipFloat = _fIsDeep && !_fHasLhsTree
                             && !!document.querySelector('div.contentRgt')
-                            && !document.querySelector('div.brdcrum');
+                            && !document.querySelector('div.brdcrum')
+                            && !_fHasKbSeg;
                         const floatBtns = _fSkipFloat ? [] : Array.from(document.querySelectorAll('a.floading-btn'))
                             .filter(b => {
                                 const s = window.getComputedStyle(b);
