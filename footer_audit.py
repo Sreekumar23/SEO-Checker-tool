@@ -1107,35 +1107,28 @@ class FooterAudit:
                         // ManageEngine Form Framework — appears on explicit contact pages
                         // (need-more-info.html, get-quote.html, demo-form.html) as the
                         // primary on-page CTA rather than a floating or sliding button.
-                        // On these short pages the floading buttons stay permanently hidden
-                        // (page height < 300px scroll threshold) so we only fire this pattern
-                        // when no floading buttons are currently visible — that guards against
-                        // false positives on product/reference pages where ffw-form is a
-                        // secondary embedded element and floading buttons are already visible.
+                        // These pages are deliberately short (maxScroll < 300px) so the
+                        // prd-ela.js scroll threshold (scrollY > 300) is never reached and
+                        // floading buttons stay hidden. On article/how-to pages the same
+                        // ffw-form appears as a secondary support widget on a long page
+                        // (maxScroll >> 300) — we must not count it as a CTA there.
+                        const _ffwMaxScroll =
+                            document.documentElement.scrollHeight - window.innerHeight;
                         const ffwForm = document.querySelector('div.ffw-form');
-                        if (ffwForm) {
+                        if (ffwForm && _ffwMaxScroll < 300) {
                             const fs = window.getComputedStyle(ffwForm);
                             if (fs.display !== 'none' && fs.visibility !== 'hidden') {
-                                const hasVisibleFloat = Array.from(
-                                    document.querySelectorAll('a.floading-btn')
-                                ).some(b => {
-                                    const s = window.getComputedStyle(b);
-                                    return s.visibility !== 'hidden' && s.display !== 'none'
-                                        && parseFloat(s.opacity) > 0.1;
-                                });
-                                if (!hasVisibleFloat) {
-                                    const submitBtn = ffwForm.querySelector(
-                                        'input.ffw-submit, input[type="submit"], button[type="submit"]');
-                                    if (submitBtn) {
-                                        return {
-                                            detected: true,
-                                            pattern: 'embedded-form',
-                                            heading: '',
-                                            bullets: [],
-                                            cta_text: submitBtn.value || submitBtn.innerText.trim() || 'Submit',
-                                            form_present: true,
-                                        };
-                                    }
+                                const submitBtn = ffwForm.querySelector(
+                                    'input.ffw-submit, input[type="submit"], button[type="submit"]');
+                                if (submitBtn) {
+                                    return {
+                                        detected: true,
+                                        pattern: 'embedded-form',
+                                        heading: '',
+                                        bullets: [],
+                                        cta_text: submitBtn.value || submitBtn.innerText.trim() || 'Submit',
+                                        form_present: true,
+                                    };
                                 }
                             }
                         }
