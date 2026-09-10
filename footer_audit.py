@@ -1667,6 +1667,10 @@ def generate_comparison_excel(rows):
         'local_footer_detected': 'en_footer_detected',
         'local_cta_detected':    'en_cta_detected',
     }
+    # Related/sub-fields that inherit "Not required" from their parent feature pair
+    _RELATED_TO_DETECTED = {
+        'local_lhs_related': ('local_lhs_detected', 'en_lhs_detected'),
+    }
 
     for ri, row in enumerate(rows, 2):
         en_failed    = bool(row.get('en_load_error'))
@@ -1679,6 +1683,10 @@ def generate_comparison_excel(rows):
             elif (not en_failed and fname in _DETECTED_PAIRS
                   and row.get(fname) is False
                   and row.get(_DETECTED_PAIRS[fname]) is False):
+                val = 'Not required'
+            elif (not en_failed and fname in _RELATED_TO_DETECTED
+                  and row.get(_RELATED_TO_DETECTED[fname][0]) is False
+                  and row.get(_RELATED_TO_DETECTED[fname][1]) is False):
                 val = 'Not required'
             else:
                 val = _fmt(row.get(fname, ''))
