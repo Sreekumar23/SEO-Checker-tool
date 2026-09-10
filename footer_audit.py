@@ -1660,6 +1660,14 @@ def generate_comparison_excel(rows):
     _EN_META    = {'english_url', 'already_english', 'en_load_error', 'en_error_msg'}
     _LOCAL_META = {'local_url', 'language', 'product', 'local_load_error', 'local_error_msg'}
 
+    # Detected-boolean fields that get the "Not required" treatment
+    _DETECTED_PAIRS = {
+        'local_lhs_detected':    'en_lhs_detected',
+        'local_rhs_detected':    'en_rhs_detected',
+        'local_footer_detected': 'en_footer_detected',
+        'local_cta_detected':    'en_cta_detected',
+    }
+
     for ri, row in enumerate(rows, 2):
         en_failed    = bool(row.get('en_load_error'))
         local_failed = bool(row.get('local_load_error'))
@@ -1668,6 +1676,10 @@ def generate_comparison_excel(rows):
                 val = 'Unable to find'
             elif local_failed and fname.startswith('local_') and fname not in _LOCAL_META:
                 val = 'Unable to find'
+            elif (not en_failed and fname in _DETECTED_PAIRS
+                  and row.get(fname) is False
+                  and row.get(_DETECTED_PAIRS[fname]) is False):
+                val = 'Not required'
             else:
                 val = _fmt(row.get(fname, ''))
             cell = ws.cell(row=ri, column=ci, value=val)
