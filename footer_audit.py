@@ -1680,13 +1680,13 @@ def generate_comparison_excel(rows):
                 val = 'Unable to find'
             elif local_failed and fname.startswith('local_') and fname not in _LOCAL_META:
                 val = 'Unable to find'
-            elif (not en_failed and fname in _DETECTED_PAIRS
+            elif (fname in _DETECTED_PAIRS
                   and row.get(fname) is False
-                  and row.get(_DETECTED_PAIRS[fname]) is False):
+                  and (en_failed or row.get(_DETECTED_PAIRS[fname]) is False)):
                 val = 'Not required'
-            elif (not en_failed and fname in _RELATED_TO_DETECTED
+            elif (fname in _RELATED_TO_DETECTED
                   and row.get(_RELATED_TO_DETECTED[fname][0]) is False
-                  and row.get(_RELATED_TO_DETECTED[fname][1]) is False):
+                  and (en_failed or row.get(_RELATED_TO_DETECTED[fname][1]) is False)):
                 val = 'Not required'
             else:
                 val = _fmt(row.get(fname, ''))

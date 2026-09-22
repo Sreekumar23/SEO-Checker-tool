@@ -559,7 +559,7 @@
             const notReqSpan = '<span class="cmp-not-required">Not required</span>';
 
             if (showLhs) {
-              const bothNoLhs = !enFailed && !r.local_lhs_detected && !r.en_lhs_detected;
+              const bothNoLhs = !r.local_lhs_detected && (enFailed || !r.en_lhs_detected);
               const lLocalTxt = r.local_lhs_detected
                 ? ('Available — ' + (r.local_lhs_links||0) + ' links')
                 : (bothNoLhs ? null : ('Not available — ' + (r.local_lhs_links||0) + ' links'));
@@ -575,7 +575,7 @@
               secRow += enFailed ? EN_UNAVAIL_SEC : `<td class="cmp-sec col-lhs">${lSecE.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
             }
             if (showRhs) {
-              const bothNoRhs = !enFailed && !r.local_rhs_detected && !r.en_rhs_detected;
+              const bothNoRhs = !r.local_rhs_detected && (enFailed || !r.en_rhs_detected);
               const rLocalTxt = r.local_rhs_detected
                 ? ('Available — ' + (r.local_rhs_links||0) + ' links')
                 : (bothNoRhs ? null : ('Not available — ' + (r.local_rhs_links||0) + ' links'));
@@ -591,7 +591,7 @@
               secRow += enFailed ? EN_UNAVAIL_SEC : `<td class="cmp-sec col-rhs">${rSecE.map(s=>'• '+escapeHtml(s)).join('<br>')||'—'}</td>`;
             }
             if (showFooter) {
-              const bothNoFtr = !enFailed && !r.local_footer_detected && !r.en_footer_detected;
+              const bothNoFtr = !r.local_footer_detected && (enFailed || !r.en_footer_detected);
               const ftL  = r.local_footer_detected ? 'Available' : (bothNoFtr ? null : 'Not available');
               const ftE  = r.en_footer_detected    ? 'Available' : 'Not available';
               const match = !enFailed && r.local_footer_detected === r.en_footer_detected;
@@ -617,7 +617,7 @@
                   return '<span style="background:#dcfce7;color:#166534;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;">Sliding</span>';
                 return '<span style="color:#bbb;font-size:10px;">—</span>';
               };
-              const bothNoCta = !enFailed && !r.local_cta_detected && !r.en_cta_detected;
+              const bothNoCta = !r.local_cta_detected && (enFailed || !r.en_cta_detected);
               const cLocalTxt = r.local_cta_detected ? ('Available — ' + escapeHtml(r.local_cta_text||'')) : null;
               const cLocal = cLocalTxt ? cLocalTxt : (bothNoCta ? notReqSpan : 'Not available');
               const cEn    = r.en_cta_detected ? 'Available — ' + escapeHtml(r.en_cta_text||'') : 'Not available';
